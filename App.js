@@ -6,6 +6,8 @@ import Videoes from "./screens/Videoes";
 import UserProfile from "./screens/UserProfile";
 import Profile from "./screens/Profile";
 import ModelCamera from "./screens/ModelCamera";
+import Account from "./screens/Account";
+import Login from "./screens/Login";
 import { createStackNavigator } from "@react-navigation/stack";
 import { NavigationContainer } from "@react-navigation/native";
 
@@ -27,6 +29,17 @@ const MyStack = () => {
   return (
     <NavigationContainer>
       <Stack.Navigator>
+        <Stack.Screen
+          name="account"
+          component={Account}
+          options={{ headerShown: false }}
+        />
+
+        <Stack.Screen
+          name="login"
+          component={Login}
+          options={{ headerShown: false }}
+        />
         <Stack.Screen
           name="videos"
           component={Videos}

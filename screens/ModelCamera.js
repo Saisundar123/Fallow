@@ -56,6 +56,8 @@ export default class ModelCamera extends Component {
           <Camera
             style={{ flex: 1 }}
             flashMode={this.state.flashMode}
+            autoFocus={Camera.Constants.AutoFocus.on}
+            whiteBalance={Camera.Constants.WhiteBalance.auto}
             type={
               this.state.type
                 ? Camera.Constants.Type.front
@@ -71,10 +73,11 @@ export default class ModelCamera extends Component {
             >
               <View
                 style={{
-                  flex: 0.4,
+                  flex: 0.7,
                   flexDirection: "row",
                   justifyContent: "space-around",
                   paddingTop: height * 0.06,
+                  // backgroundColor: "red",
                 }}
               >
                 <View>
@@ -102,8 +105,13 @@ export default class ModelCamera extends Component {
                     </View>
                   </TouchableOpacity>
                 </View>
-                <View>
-                  <View style={{ paddingBottom: width * 0.02 }}>
+                <View
+                  style={{
+                    // backgroundColor: "green",
+                    justifyContent: "flex-end",
+                  }}
+                >
+                  <View style={{ paddingBottom: width * 0.04 }}>
                     <TouchableOpacity>
                       <Fontisto name="flash" size={width * 0.09} color="#fff" />
                     </TouchableOpacity>
@@ -112,7 +120,7 @@ export default class ModelCamera extends Component {
                     </View>
                   </View>
 
-                  <View style={{ paddingBottom: width * 0.02 }}>
+                  <View style={{ paddingBottom: width * 0.04 }}>
                     <TouchableOpacity
                       onPress={() => {
                         this.setState({ type: !this.state.type });
@@ -125,7 +133,7 @@ export default class ModelCamera extends Component {
                     </View>
                   </View>
 
-                  <View style={{ paddingBottom: width * 0.02 }}>
+                  <View style={{ paddingBottom: width * 0.04 }}>
                     <TouchableOpacity>
                       <MaterialIcons
                         name="filter-tilt-shift"
@@ -138,7 +146,7 @@ export default class ModelCamera extends Component {
                     </View>
                   </View>
 
-                  <View style={{ paddingBottom: width * 0.02 }}>
+                  <View style={{ paddingBottom: width * 0.04 }}>
                     <TouchableOpacity>
                       <MaterialCommunityIcons
                         name="camera-timer"
@@ -154,7 +162,7 @@ export default class ModelCamera extends Component {
               </View>
               <View
                 style={{
-                  flex: 0.6,
+                  flex: 0.3,
                   // backgroundColor: "red",
                   justifyContent: "flex-end",
                   alignItems: "center",
