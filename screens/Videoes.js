@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { Audio, Video } from "expo-av";
 import { AntDesign, Entypo, FontAwesome, Feather } from "@expo/vector-icons";
+import { MultiTouchView } from "expo-multi-touch";
 
 const { height, width } = Dimensions.get("window");
 

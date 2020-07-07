@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   TextInput,
   Animated,
+  Easing,
 } from "react-native";
 import { Entypo } from "@expo/vector-icons";
 import Login from "./Login";
@@ -24,13 +25,11 @@ class Account extends Component {
   }
 
   signUp = () => {
-    console.log("lllll");
-    this.setState({ signUp: true });
     this.animationFun();
+    this.setState({ signUp: true });
   };
 
   logIn = () => {
-    console.log("lllll");
     this.setState({ login: true });
     this.animationFun();
   };
@@ -39,7 +38,7 @@ class Account extends Component {
     Animated.timing(this.state.animation, {
       toValue: 1,
       duration: 500,
-      // easing: Easing.bounce
+      // easing: Easing.bounce,
     }).start();
   };
   render() {
@@ -49,7 +48,7 @@ class Account extends Component {
     });
     const flex = this.state.animation.interpolate({
       inputRange: [0, 1],
-      outputRange: [0.5, 0.3],
+      outputRange: [0.4, 0.3],
     });
 
     return (
@@ -70,14 +69,16 @@ class Account extends Component {
         {this.state.signUp ? (
           <SignupFields
             goLogin={() => this.setState({ signUp: false, login: true })}
+            onPress={() => this.setState({ signUp: false, login: true })}
           />
         ) : this.state.login ? (
           <Login
             goSignup={() => this.setState({ signUp: true, login: false })}
+            onLogin={() => this.props.navigation.navigate("videos")}
           />
         ) : (
           <View style={{ flex: 0.5 }}>
-            <View style={{ flex: 1, alignItems: "center" }}>
+            <View style={{ flex: 0.6, alignItems: "center" }}>
               <Text style={{ fontSize: width * 0.08, fontWeight: "bold" }}>
                 FALLOW
               </Text>
@@ -102,7 +103,9 @@ class Account extends Component {
                 alignItems: "center",
               }}
             >
-              <TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => this.props.navigation.navigate("videos")}
+              >
                 <Text
                   style={{
                     fontSize: width * 0.04,
@@ -225,7 +228,7 @@ const SignupFields = (props) => {
           <Entypo name="eye-with-line" size={width * 0.05} />
         </View>
       </View>
-      <AccountButton name="Sign Up" onPress={() => this.signUp()} />
+      <AccountButton name="Sign Up" onPress={() => props.onPress()} />
       <View
         style={{
           alignItems: "center",

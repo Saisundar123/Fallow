@@ -20,25 +20,6 @@ class Login extends Component {
   render() {
     return (
       <View style={{ flex: 1 }}>
-        {/* <View
-          style={{
-            height: height * 0.05,
-            width: width * 0.8,
-            backgroundColor: "#f1f5fb",
-            alignSelf: "center",
-            paddingLeft: width * 0.02,
-            marginBottom: width * 0.03,
-          }}
-        >
-          <TextInput
-            placeholder="FullName"
-            style={{
-              height: height * 0.048,
-              // backgroundColor: "red",
-              width: width * 0.75,
-            }}
-          />
-        </View> */}
         <View
           style={{
             height: height * 0.05,
@@ -87,7 +68,7 @@ class Login extends Component {
             <Entypo name="eye-with-line" size={width * 0.05} />
           </View>
         </View>
-        <AccountButton name="Log in" onPress={() => this.signUp()} />
+        <AccountButton name="Log in" onPress={() => this.props.onLogin()} />
         <View
           style={{
             alignItems: "center",

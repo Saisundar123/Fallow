@@ -8,10 +8,13 @@ import {
   ScrollView,
   Image,
   CheckBox,
+  Linking,
+  TouchableHighlight,
 } from "react-native";
 import { Audio, Video } from "expo-av";
 import { AntDesign, Entypo, FontAwesome, Feather } from "@expo/vector-icons";
 import BottomSheet from "react-native-js-bottom-sheet";
+import { MultiTouchView } from "expo-multi-touch";
 
 const { height, width } = Dimensions.get("window");
 
@@ -20,6 +23,7 @@ class Videos extends Component {
     super(props);
     this.state = {
       value: 0,
+      number: "6304975047",
       sheetVisible: false,
       data: [
         {
@@ -192,9 +196,21 @@ class Videos extends Component {
         break;
       case "whatsapp":
         datas[index].whatsapp += 1;
+        Linking.openURL(
+          `https://wa.me/${this.state.number}/?text=urlencodedtext`
+        );
         break;
     }
     this.setState({ data: datas });
+  };
+
+  pauseVideo = (index) => {
+    if (index === this.state.value) {
+      this.setState({ value: "" });
+      // this[index].pauseAsync();
+    } else {
+      this.setState({ value: index });
+    }
   };
 
   // componentD() {
@@ -213,7 +229,7 @@ class Videos extends Component {
           // your cell height
           if (this.state.value !== index) {
             await this.setState({ value: index });
-            // console.log(this.state.data, "kk");
+            console.log(this.state.value, "kk");
           }
         }}
       >
@@ -227,13 +243,15 @@ class Videos extends Component {
               return (
                 <View>
                   <View style={{ height, width }}>
-                    <Video
-                      resizeMode="cover"
-                      source={item.url}
-                      ref={(ref) => (this._handleVideoRef = ref)}
-                      style={{ height, width }}
-                      shouldPlay={index == this.state.value ? true : false}
-                    />
+                    <TouchableHighlight onPress={() => this.pauseVideo(index)}>
+                      <Video
+                        resizeMode="cover"
+                        source={item.url}
+                        ref={(ref) => (this[index] = ref)}
+                        style={{ height, width }}
+                        shouldPlay={index === this.state.value ? true : false}
+                      />
+                    </TouchableHighlight>
                     <BottomSheet
                       ref={(ref) => {
                         this[index] = ref;
