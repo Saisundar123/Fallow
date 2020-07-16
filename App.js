@@ -4,26 +4,213 @@ import { StyleSheet, Text, View, Dimensions } from "react-native";
 import Videos from "./screens/Videos";
 import Videoes from "./screens/Videoes";
 import UserProfile from "./screens/UserProfile";
+import UploadVideo from "./screens/UploadVideo";
 import Profile from "./screens/Profile";
 import ModelCamera from "./screens/ModelCamera";
 import Account from "./screens/Account";
 import Login from "./screens/Login";
+import Search from "./screens/toptabs/Search";
+import Draft from "./screens/toptabs/Draft";
+import Mygallery from "./screens/toptabs/Mygallery";
+import MyPost from "./screens/toptabs/MyPost";
+import MyTabBar from "./screens/MyTabBar";
 import { createStackNavigator } from "@react-navigation/stack";
 import { NavigationContainer } from "@react-navigation/native";
+import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { createDrawerNavigator } from "@react-navigation/drawer";
+import BottomShe from "./screens/BottomShe";
+import { AntDesign, Feather, MaterialIcons, Entypo } from "@expo/vector-icons";
+import Test from "./screens/Test";
 
 const { height, width } = Dimensions.get("window");
 
 const Stack = createStackNavigator();
+const Tab = createMaterialTopTabNavigator();
+const Drawer = createDrawerNavigator();
+const Tabs = createBottomTabNavigator();
 
 export default function App() {
   return (
     <View style={styles.container}>
-      <StatusBar style="dark" />
+      <StatusBar style="dark" hidden={true} />
       <MyStack />
-      {/* <Videoes /> */}
+      {/* <MyBottomTabs /> */}
+      {/* <Test /> */}
     </View>
   );
 }
+
+const MyBottomTabs = () => {
+  return (
+    <Tabs.Navigator
+      tabBar={(props) => <MyTabBar {...props} />}
+      tabBarOptions={{
+        // activeBackgroundColor: "red",
+        tabStyle: {
+          // borderTopLeftRadius: width * 0.06,
+          // backgroundColor: "transparent",
+          // position: "relative",
+          // left: 300,
+        },
+        style: {
+          // backgroundColor: "transparent",
+          // borderTopLeftRadius: width * 0.08,
+          // borderTopRightRadius: width * 0.08,
+          // elevation: 5,
+          height: height * 0.07,
+          // borderWidth: 3,
+        },
+        showLabel: false,
+      }}
+    >
+      <Tabs.Screen
+        name="Home"
+        component={Videos}
+        options={{
+          // tabBarVisible: false,
+          tabBarLabel: "",
+          tabBarIcon: ({ color, size, focused }) => (
+            <View
+              style={{
+                height: width * 0.1,
+                width: width * 0.1,
+                backgroundColor: "rgba(52, 52, 52, 0.8)",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: width * 0.02,
+              }}
+            >
+              <AntDesign name="home" color={color} size={size} />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="search"
+        component={Search}
+        options={{
+          tabBarLabel: "",
+
+          tabBarIcon: ({ color, size }) => (
+            <View
+              style={{
+                height: width * 0.1,
+                width: width * 0.1,
+                backgroundColor: "rgba(52, 52, 52, 0.8)",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: width * 0.02,
+              }}
+            >
+              <Feather name="search" color={color} size={size} />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="camera"
+        component={ModelCamera}
+        options={{
+          tabBarVisible: false,
+          tabBarLabel: "",
+          tabBarIcon: ({ color, size }) => (
+            <View
+              style={{
+                height: width * 0.1,
+                width: width * 0.1,
+                backgroundColor: "blue",
+                alignItems: "center",
+                justifyContent: "center",
+                borderTopRightRadius: width * 0.02,
+                borderTopLeftRadius: width * 0.02,
+                borderBottomLeftRadius: width * 0.02,
+              }}
+            >
+              <Entypo name="controller-play" color="#fff" size={size} />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="notification"
+        component={Mygallery}
+        options={{
+          tabBarLabel: "",
+          tabBarIcon: ({ color, size }) => (
+            <View
+              style={{
+                height: width * 0.1,
+                width: width * 0.1,
+                backgroundColor: "rgba(52, 52, 52, 0.8)",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: width * 0.02,
+              }}
+            >
+              <AntDesign name="message1" color={color} size={size} />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="mytabs"
+        component={MyStacks}
+        options={{
+          tabBarLabel: "",
+          tabBarIcon: ({ color, size }) => (
+            <View
+              style={{
+                height: width * 0.1,
+                width: width * 0.1,
+                backgroundColor: "rgba(52, 52, 52, 0.8)",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: width * 0.02,
+              }}
+            >
+              {console.log(color)}
+              <MaterialIcons name="person-outline" color={color} size={size} />
+            </View>
+          ),
+        }}
+      />
+    </Tabs.Navigator>
+  );
+};
+
+const MyTabs = () => {
+  return (
+    <Tab.Navigator>
+      <Tab.Screen name="mygallery" component={Mygallery} />
+      <Tab.Screen name="mypost" component={MyPost} />
+      <Tab.Screen name="draft" component={Draft} />
+    </Tab.Navigator>
+  );
+};
+
+const MyStacks = () => {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen
+        name="mytabs"
+        component={MyTabs}
+        // options={{ headerShown: false }}
+        options={{
+          header: ({}) => (
+            <View style={{ height: height * 0.43 }}>
+              <Profile />
+            </View>
+          ),
+          headerStyle: {
+            height: 300,
+            backgroundColor: "red",
+          },
+        }}
+      />
+    </Stack.Navigator>
+  );
+};
 
 const MyStack = () => {
   return (
@@ -41,24 +228,46 @@ const MyStack = () => {
           options={{ headerShown: false }}
         />
         <Stack.Screen
-          name="videos"
-          component={Videos}
+          name="profile"
+          component={MyTabs}
+          // options={{ headerShown: false }}
+          options={{
+            header: ({ navigation }) => (
+              <View style={{ height: height * 0.5 }}>
+                <Profile onPress={() => navigation.navigate("videos")} />
+              </View>
+            ),
+            headerStyle: {
+              height: 300,
+              backgroundColor: "red",
+            },
+          }}
+        />
+        <Stack.Screen
+          name="mybottomtabs"
+          component={MyBottomTabs}
           options={{ headerShown: false }}
         />
         <Stack.Screen
           name="userProfile"
           component={UserProfile}
           options={{
-            title: "",
-            headerStyle: {
-              height: height * 0.1,
-            },
+            // title: "",
+            // headerStyle: {
+            //   height: height * 0.1,
+            // },
+            headerShown: false,
           }}
         />
-        <Stack.Screen name="profile" component={Profile} />
+        {/* <Stack.Screen name="profile" component={Profile} />  */}
         <Stack.Screen
           name="camera"
           component={ModelCamera}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="uploadvideo"
+          component={UploadVideo}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>

@@ -8,9 +8,13 @@ import {
   TextInput,
   Animated,
   Easing,
+  ActivityIndicator,
+  ToastAndroid,
 } from "react-native";
 import { Entypo } from "@expo/vector-icons";
 import Login from "./Login";
+import axios from "axios";
+import { url } from "./Main";
 
 const { height, width } = Dimensions.get("window");
 
@@ -21,6 +25,11 @@ class Account extends Component {
       animation: new Animated.Value(0),
       signUp: false,
       login: false,
+      fullname: "",
+      email: "",
+      Password: "",
+      error: false,
+      processing: false,
     };
   }
 
@@ -34,12 +43,86 @@ class Account extends Component {
     this.animationFun();
   };
 
+  onChangeText = (field, text) => {
+    if (field == "fullname") {
+      this.setState({
+        fullname: text,
+      });
+      // console.log(this.state.userData.fullname, "full");
+    } else if (field == "email") {
+      this.setState({
+        email: text,
+      });
+    } else if (field == "password") {
+      this.setState({
+        password: text,
+      });
+    }
+  };
+
   animationFun = () => {
     Animated.timing(this.state.animation, {
       toValue: 1,
       duration: 500,
       // easing: Easing.bounce,
     }).start();
+  };
+
+  signupValidate = () => {
+    const { fullname, email, password } = this.state;
+    if (fullname !== "" && email !== "" && password !== "") {
+      const reg = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+      if (reg.test(email) === true) {
+        // console.log(fullname, email, password, "jjjjjjji");
+        if (password.length >= 8) {
+          this.onPressSign(fullname, email, password);
+        } else {
+          this.setState({ error: "password" });
+        }
+      } else {
+        this.setState({ error: "email" });
+      }
+    } else {
+      alert("Please Fill All Fields");
+    }
+  };
+
+  onPressSign = (fullname, email, password) => {
+    this.setState({ processing: true });
+    axios
+      .post(
+        `${url}api/createUser`,
+        {
+          name: fullname,
+          email: email,
+          password: password,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      )
+      .then((res) => {
+        if (res.data.status == 200) {
+          ToastAndroid.showWithGravity(
+            "User Created",
+            ToastAndroid.SHORT,
+            ToastAndroid.CENTER
+          );
+          this.setState({
+            processing: false,
+            email: "",
+            password: "",
+            fullname: "",
+            login: true,
+            signUp: false,
+          });
+
+          console.log(res.data);
+        }
+      })
+      .catch((err) => console.log(err, "err"));
   };
   render() {
     const bottom = this.state.animation.interpolate({
@@ -62,7 +145,7 @@ class Account extends Component {
           }}
         >
           <Animated.Image
-            source={require("../assets/appLogo.png")}
+            source={require("../assets/logo.png")}
             style={{ height: width * 0.2, width: width * 0.2, bottom }}
           />
         </Animated.View>
@@ -70,11 +153,15 @@ class Account extends Component {
           <SignupFields
             goLogin={() => this.setState({ signUp: false, login: true })}
             onPress={() => this.setState({ signUp: false, login: true })}
+            onChangeText={this.onChangeText}
+            onPressSign={this.signupValidate}
+            error={this.state.error}
+            processing={this.state.processing}
           />
         ) : this.state.login ? (
           <Login
             goSignup={() => this.setState({ signUp: true, login: false })}
-            onLogin={() => this.props.navigation.navigate("videos")}
+            onLogin={() => this.props.navigation.navigate("mybottomtabs")}
           />
         ) : (
           <View style={{ flex: 0.5 }}>
@@ -104,7 +191,7 @@ class Account extends Component {
               }}
             >
               <TouchableOpacity
-                onPress={() => this.props.navigation.navigate("videos")}
+                onPress={() => this.props.navigation.navigate("mybottomtabs")}
               >
                 <Text
                   style={{
@@ -136,11 +223,14 @@ const AccountButton = (props) => {
           backgroundColor: "#b163e7",
           alignSelf: "center",
           alignItems: "center",
-          justifyContent: "center",
+          justifyContent: "space-between",
+          paddingLeft: width * 0.35,
+          paddingRight: width * 0.04,
           borderRadius: width * 0.02,
           marginBottom: width * 0.03,
           borderWidth: 2,
           borderColor: "#b163e7",
+          flexDirection: "row",
         }}
         onPress={() => props.onPress()}
       >
@@ -153,6 +243,11 @@ const AccountButton = (props) => {
         >
           {props.name}
         </Text>
+        <View style={{}}>
+          {props.activity ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : null}
+        </View>
       </TouchableOpacity>
     </View>
   );
@@ -178,6 +273,8 @@ const SignupFields = (props) => {
             // backgroundColor: "red",
             width: width * 0.75,
           }}
+          // value={props.fullname}
+          onChangeText={(text) => props.onChangeText("fullname", text)}
         />
       </View>
       <View
@@ -188,6 +285,8 @@ const SignupFields = (props) => {
           alignSelf: "center",
           paddingLeft: width * 0.02,
           marginBottom: width * 0.03,
+          borderWidth: props.error == "email" ? 1 : null,
+          borderColor: "red",
         }}
       >
         <TextInput
@@ -197,6 +296,8 @@ const SignupFields = (props) => {
             // backgroundColor: "red",
             width: width * 0.75,
           }}
+          // value={props.email}
+          onChangeText={(text) => props.onChangeText("email", text)}
         />
       </View>
       <View
@@ -208,6 +309,8 @@ const SignupFields = (props) => {
           paddingLeft: width * 0.02,
           marginBottom: width * 0.03,
           flexDirection: "row",
+          borderWidth: props.error == "password" ? 1 : null,
+          borderColor: "red",
         }}
       >
         <TextInput
@@ -217,6 +320,8 @@ const SignupFields = (props) => {
             // backgroundColor: "red",
             width: width * 0.65,
           }}
+          // value={props.password}
+          onChangeText={(text) => props.onChangeText("password", text)}
         />
         <View
           style={{
@@ -228,7 +333,11 @@ const SignupFields = (props) => {
           <Entypo name="eye-with-line" size={width * 0.05} />
         </View>
       </View>
-      <AccountButton name="Sign Up" onPress={() => props.onPress()} />
+      <AccountButton
+        name="Sign Up"
+        onPress={() => props.onPressSign()}
+        activity={props.processing ? true : false}
+      />
       <View
         style={{
           alignItems: "center",

@@ -7,16 +7,86 @@ import {
   TouchableOpacity,
   TextInput,
   Animated,
+  AsyncStorage,
 } from "react-native";
 import { Entypo } from "@expo/vector-icons";
+import axios from "axios";
+import { url } from "./Main";
 
 const { height, width } = Dimensions.get("window");
 
 class Login extends Component {
   constructor(props) {
     super(props);
-    this.state = {};
+    this.state = {
+      email: "",
+      password: "",
+      passwordVisible: true,
+    };
   }
+
+  validateLogin = () => {
+    const { email, password } = this.state;
+    // console.log(email, password, "kkkk");
+    if (email.length > 0 && password.length > 0) {
+      // console.log("get");
+      this.onPressLogin(email, password);
+    } else {
+      alert("Plaese Fill All Fields");
+    }
+  };
+
+  onPressLogin = (email, password) => {
+    // console.log(email, password, "oooooo");
+    // this.setState({ processing: true });
+    axios
+      .post(
+        `${url}api/findUser`,
+        {
+          email: email,
+          password: password,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      )
+      .then(async (res) => {
+        if (res.data.status == 200) {
+          await this._storeData(res.data);
+          this.setState({
+            email: "",
+            password: "",
+          });
+          this.props.onLogin();
+
+          console.log(res.data.userData.fullname);
+        }
+      })
+      .catch((err) => console.log(err, "err"));
+  };
+
+  _storeData = async (data) => {
+    try {
+      await AsyncStorage.setItem("userdata", data.userData._id);
+    } catch (error) {
+      console.log(error, "err");
+    }
+    try {
+      await AsyncStorage.setItem("username", data.userData.fullname);
+    } catch (error) {
+      console.log(error, "err");
+    }
+  };
+
+  eyePress = () => {
+    this.setState({ passwordVisible: false });
+    setTimeout(() => {
+      this.setState({ passwordVisible: true });
+    }, 300);
+  };
+
   render() {
     return (
       <View style={{ flex: 1 }}>
@@ -37,6 +107,7 @@ class Login extends Component {
               // backgroundColor: "red",
               width: width * 0.75,
             }}
+            onChangeText={(text) => this.setState({ email: text })}
           />
         </View>
         <View
@@ -52,23 +123,30 @@ class Login extends Component {
         >
           <TextInput
             placeholder="Password"
+            secureTextEntry={this.state.passwordVisible}
             style={{
               height: height * 0.048,
               // backgroundColor: "red",
               width: width * 0.65,
             }}
+            onChangeText={(text) => this.setState({ password: text })}
           />
-          <View
+          <TouchableOpacity
             style={{
               width: width * 0.15,
               alignItems: "center",
               justifyContent: "center",
             }}
+            onPress={() => this.eyePress()}
           >
             <Entypo name="eye-with-line" size={width * 0.05} />
-          </View>
+          </TouchableOpacity>
         </View>
-        <AccountButton name="Log in" onPress={() => this.props.onLogin()} />
+        <AccountButton
+          name="Log in"
+          // onPress={() => this.props.onLogin()}
+          onPress={() => this.validateLogin()}
+        />
         <View
           style={{
             alignItems: "center",

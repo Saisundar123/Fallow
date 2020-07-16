@@ -5,6 +5,14 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
+    "android": {
+      "package": "com.cnq.Fallow",
+      "versionCode": 1
+    },
+    "ios": {
+      "bundleIdentifier": "com.cnq.Fallow",
+      "buildNumber": "1.0.0"
+    },
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -13,12 +21,8 @@
     "updates": {
       "fallbackToCacheTimeout": 0
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
-    "ios": {
-      "supportsTablet": true
-    },
+    "assetBundlePatterns": ["**/*"],
+
     "web": {
       "favicon": "./assets/favicon.png"
     }

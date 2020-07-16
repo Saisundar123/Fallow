@@ -1,7 +1,17 @@
 import React, { Component } from "react";
-import { Text, View, TouchableOpacity, Dimensions } from "react-native";
+import {
+  Text,
+  View,
+  TouchableOpacity,
+  Dimensions,
+  ImageBackground,
+  Image,
+} from "react-native";
 import * as Permissions from "expo-permissions";
+import Constants from "expo-constants";
+import * as ImagePicker from "expo-image-picker";
 import { Camera } from "expo-camera";
+import Dialog, { DialogContent } from "react-native-popup-dialog";
 import {
   Fontisto,
   Ionicons,
@@ -10,6 +20,7 @@ import {
   MaterialCommunityIcons,
   Feather,
 } from "@expo/vector-icons";
+import { url } from "./Main";
 
 const { height, width } = Dimensions.get("window");
 export default class ModelCamera extends Component {
@@ -20,39 +31,106 @@ export default class ModelCamera extends Component {
       type: false,
       videoTaking: false,
       flashMode: Camera.Constants.FlashMode.on,
+      galleryVideo: "",
+      visible: false,
+      live: "",
     };
   }
 
   async componentDidMount() {
-    const { status } = await Permissions.askAsync(Permissions.AUDIO_RECORDING);
-    this.setState({ hasCameraPermission: status === "granted" });
-    // console.log(this.state.hasCameraPermission);
+    // this.getPermissionAsync();
+    this.cameraPermission();
   }
+
+  componentDidUpdate(prevProps) {
+    // console.log(this.props.route.params, prevProps.route.params, "hiii");
+    if (this.props.live !== prevProps.live) {
+      this.setState({
+        live:
+          this.props.route.params == undefined
+            ? false
+            : this.props.route.params.live,
+      });
+    }
+  }
+
+  cameraPermission = async (prevProps) => {
+    const statuses = await Permissions.askAsync(
+      Permissions.CAMERA,
+      Permissions.CAMERA_ROLL
+    );
+    if (statuses.status === "granted") {
+      const { status } = await Permissions.askAsync(
+        Permissions.AUDIO_RECORDING
+      );
+      this.setState({
+        hasCameraPermission: status === "granted" ? true : false,
+      });
+      // console.log(this.state.hasCameraPermission, status);
+    }
+
+    // this.setState({
+    //   live:
+    //     this.props.route.params == undefined
+    //       ? this.props.route.params.live
+    //       : null,
+    // });
+    // console.log(this.props.route.params, this.state.live, "route");
+  };
+
+  getPermissionAsync = async () => {
+    if (Constants.platform.ios) {
+      const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
+      if (status !== "granted") {
+        alert("Sorry, we need camera roll permissions to make this work!");
+      }
+    }
+  };
+
+  _pickImage = async () => {
+    try {
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+      if (!result.cancelled) {
+        // this.setState({ galleryVideo: result });
+        this.props.navigation.navigate("uploadvideo", { uploadData: result });
+      }
+
+      console.log(result);
+    } catch (E) {
+      console.log(E);
+    }
+  };
 
   recordVideo = () => {
     if (this.state.videoTaking) {
       this.setState({ videoTaking: false });
       this.cameraRef.stopRecording();
-      // .then((res) => console.log(res, "resStop"))
-      // .catch((err) => console.log(err, "err"));
     } else {
       this.setState({ videoTaking: true });
       this.cameraRef
-        .recordAsync()
-        .then((res) => console.log(res, "res"))
+        .recordAsync({
+          maxDuration: 60,
+          quality: Camera.Constants.VideoQuality["1080p"],
+          mute: false,
+        })
+        .then((res) => {
+          this.props.navigation.navigate("uploadvideo", { uploadData: res });
+          console.log(res, "res");
+        })
         .catch((err) => console.log(err, "err"));
     }
   };
 
   render() {
-    const { hasCameraPermission } = this.state;
-    if (hasCameraPermission === null) {
-      return <View />;
-    } else if (hasCameraPermission === false) {
-      return <Text>No access to camera</Text>;
-    } else {
-      return (
-        <View style={{ flex: 1 }}>
+    console.log(this.state.live, "ren");
+    return (
+      <View style={{ flex: 1 }}>
+        {this.state.hasCameraPermission ? (
           <Camera
             style={{ flex: 1 }}
             flashMode={this.state.flashMode}
@@ -75,18 +153,23 @@ export default class ModelCamera extends Component {
                 style={{
                   flex: 0.7,
                   flexDirection: "row",
-                  justifyContent: "space-around",
+                  justifyContent: "space-between",
                   paddingTop: height * 0.06,
                   // backgroundColor: "red",
+                  paddingRight: width * 0.04,
+                  paddingLeft: width * 0.04,
                 }}
               >
                 <View>
-                  <Text style={{ fontSize: width * 0.06, color: "#fff" }}>
-                    0:0
-                  </Text>
+                  {this.state.live ? null : (
+                    <Text style={{ fontSize: width * 0.06, color: "#fff" }}>
+                      0:0
+                    </Text>
+                  )}
+                  {/* )} */}
                 </View>
                 <View>
-                  <TouchableOpacity
+                  {/* <TouchableOpacity
                     style={{
                       height: height * 0.04,
                       width: width * 0.4,
@@ -103,7 +186,7 @@ export default class ModelCamera extends Component {
                     <View>
                       <Text style={{ fontWeight: "bold" }}>ADD MEDIA</Text>
                     </View>
-                  </TouchableOpacity>
+                  </TouchableOpacity> */}
                 </View>
                 <View
                   style={{
@@ -164,11 +247,27 @@ export default class ModelCamera extends Component {
                 style={{
                   flex: 0.3,
                   // backgroundColor: "red",
-                  justifyContent: "flex-end",
-                  alignItems: "center",
+                  justifyContent: "space-around",
+                  alignItems: "flex-end",
                   paddingBottom: width * 0.02,
+                  flexDirection: "row",
                 }}
               >
+                {this.state.live ? null : (
+                  <TouchableOpacity onPress={() => this._pickImage()}>
+                    <Image
+                      source={{
+                        uri: "https://img.icons8.com/cotton/2x/gallery.png",
+                      }}
+                      style={{ height: width * 0.13, width: width * 0.13 }}
+                    />
+                    <View>
+                      <Text style={{ fontSize: width * 0.04, color: "#fff" }}>
+                        Gallery
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                )}
                 <TouchableOpacity
                   style={{
                     height: width * 0.2,
@@ -213,11 +312,47 @@ export default class ModelCamera extends Component {
                     )}
                   </View>
                 </TouchableOpacity>
+                {this.state.live ? null : (
+                  <TouchableOpacity style={{ alignItems: "center" }}>
+                    <Image
+                      source={{
+                        uri:
+                          "https://img.icons8.com/fluent/96/music-library.png",
+                      }}
+                      style={{ height: width * 0.13, width: width * 0.13 }}
+                    />
+                    <View>
+                      <Text style={{ fontSize: width * 0.04, color: "#fff" }}>
+                        Add Music
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                )}
               </View>
             </View>
           </Camera>
-        </View>
-      );
-    }
+        ) : this.state.hasCameraPermission == false ? (
+          <Text>No access to camera</Text>
+        ) : (
+          <View />
+        )}
+        {/* <Dialog
+          visible={this.state.visible}
+          onTouchOutside={() => {
+            this.setState({ visible: false });
+          }}
+        >
+          <DialogContent>
+            <View>
+              <Text>Do You Want To Upload </Text>
+            </View>
+            <TouchableOpacity onPress={() => this.uploadGallery()}>
+              <Text>Upload</Text>
+            </TouchableOpacity>
+          </DialogContent>
+        </Dialog> */}
+      </View>
+    );
   }
 }
+// }
