@@ -7,6 +7,7 @@ import {
   TextInput,
   Switch,
   ActivityIndicator,
+  AsyncStorage,
 } from "react-native";
 // import Video from 'react-native-video';
 import { Audio, Video } from "expo-av";
@@ -33,20 +34,10 @@ class UploadVideo extends Component {
     try {
       const value = await AsyncStorage.getItem("userdata");
       if (value !== null) {
+        const datas = JSON.parse(value);
         // We have data!!
-        this.setState({ userid: value });
-        console.log(value, "val");
-      }
-    } catch (error) {
-      // Error retrieving data
-      console.log(err, "err");
-    }
-    try {
-      const value1 = await AsyncStorage.getItem("username");
-      if (value1 !== null) {
-        // We have data!!
-        // this.getApiData(value);
-        console.log(value1, "val1111");
+        await this.setState({ userid: datas.userData });
+        // console.log(value, "val");
       }
     } catch (error) {
       // Error retrieving data
@@ -84,12 +75,13 @@ class UploadVideo extends Component {
 
   uploadVideo = () => {
     this.setState({ visible: true });
+    // console.log(this.state.userid, "userud");
     fetch(`${url}api/video/upload`, {
       method: "POST",
       body: this.createFormData(this.props.route.params.uploadData, {
-        username: "Aditya123",
+        username: this.state.userid.fullname,
         caption: this.state.caption,
-        userid: this.state.userid,
+        userid: this.state.userid._id,
       }),
     })
       .then((response) => response.json())

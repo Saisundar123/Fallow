@@ -6,8 +6,6 @@ import {
   Dimensions,
   TouchableOpacity,
 } from "react-native";
-import { useLinkProps } from "@react-navigation/native";
-import { render } from "react-dom";
 import {
   AntDesign,
   Feather,
@@ -15,6 +13,7 @@ import {
   Entypo,
   FontAwesome,
 } from "@expo/vector-icons";
+import { Card } from "native-base";
 
 const { height, width } = Dimensions.get("screen");
 
@@ -59,13 +58,18 @@ export default class MyTabBar extends Component {
     }
 
     return (
-      <View
+      <Card
         style={{
           flexDirection: "row",
           justifyContent: "space-around",
           height: height * 0.07,
           alignItems: "center",
-          backgroundColor: "transparent",
+          marginBottom: 0,
+          marginLeft: 0,
+          marginRight: 0,
+          marginTop: 0,
+          // backgroundColor: "transparent",
+          // elevation: 5,
         }}
       >
         {this.props.state.routes.map((item, i) => {
@@ -137,7 +141,7 @@ export default class MyTabBar extends Component {
             </View>
           );
         })}
-      </View>
+      </Card>
     );
   }
 }

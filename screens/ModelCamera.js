@@ -33,7 +33,7 @@ export default class ModelCamera extends Component {
       flashMode: Camera.Constants.FlashMode.on,
       galleryVideo: "",
       visible: false,
-      live: "",
+      live: false,
     };
   }
 
@@ -43,14 +43,14 @@ export default class ModelCamera extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    // console.log(this.props.route.params, prevProps.route.params, "hiii");
-    if (this.props.live !== prevProps.live) {
-      this.setState({
-        live:
-          this.props.route.params == undefined
-            ? false
-            : this.props.route.params.live,
-      });
+    // console.log("llllllll");
+    if (this.props !== prevProps) {
+      if (this.props.route.params) {
+        // console.log(this.props.route.params, "params");
+        this.setState({
+          live: this.props.route.params.live,
+        });
+      }
     }
   }
 
@@ -127,7 +127,7 @@ export default class ModelCamera extends Component {
   };
 
   render() {
-    console.log(this.state.live, "ren");
+    // console.log(this.state.live, "ren");
     return (
       <View style={{ flex: 1 }}>
         {this.state.hasCameraPermission ? (
@@ -166,7 +166,6 @@ export default class ModelCamera extends Component {
                       0:0
                     </Text>
                   )}
-                  {/* )} */}
                 </View>
                 <View>
                   {/* <TouchableOpacity
@@ -313,7 +312,10 @@ export default class ModelCamera extends Component {
                   </View>
                 </TouchableOpacity>
                 {this.state.live ? null : (
-                  <TouchableOpacity style={{ alignItems: "center" }}>
+                  <TouchableOpacity
+                    style={{ alignItems: "center" }}
+                    onPress={() => this.props.navigation.navigate("music")}
+                  >
                     <Image
                       source={{
                         uri:

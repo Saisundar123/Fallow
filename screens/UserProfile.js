@@ -261,16 +261,19 @@ class UserProfile extends Component {
                 </TouchableOpacity>
               </View>
             </View>
+
             <View
               style={{
                 flex: 1,
                 borderTopWidth: 1,
                 backgroundColor: "red",
-                height: height * 0.4,
+                // height: height * 0.4,
               }}
             >
+              {/* <ScrollView> */}
               {/* {console.log(this.state.userdata.userposts, "noe")} */}
               <RecentPosts postData={this.state.userdata.userPosts} />
+              {/* </ScrollView> */}
             </View>
           </View>
         ) : (
@@ -458,6 +461,7 @@ const RecentPost = (props) => {
 
 const RecentPosts = (props) => {
   return (
+    // <ScrollView style={{ flex: 1 }}>
     <View style={{ flex: 1, flexDirection: "row", flexWrap: "wrap" }}>
       <FlatList
         data={props.postData}
@@ -466,18 +470,18 @@ const RecentPosts = (props) => {
           return (
             <TouchableOpacity
               style={{
-                borderRadius: width * 0.02,
+                // borderRadius: width * 0.02,
                 margin: width * 0.015,
                 height: height * 0.25,
                 width: width * 0.3,
-                backgroundColor: "red",
+                // backgroundColor: "red",
               }}
             >
               <Video
-                resizeMode="contain"
+                resizeMode="cover"
                 source={{ uri: url + item.url }}
                 // ref={(ref) => (this[index] = ref)}
-                style={{ flex: 1 }}
+                style={{ flex: 1, borderRadius: width * 0.02 }}
                 shouldPlay={false}
               />
             </TouchableOpacity>
@@ -488,5 +492,6 @@ const RecentPosts = (props) => {
         
       })} */}
     </View>
+    // </ScrollView>
   );
 };

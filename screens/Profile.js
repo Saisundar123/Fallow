@@ -17,6 +17,7 @@ import { url } from "./Main";
 import * as ImagePicker from "expo-image-picker";
 import Constants from "expo-constants";
 import * as Permissions from "expo-permissions";
+import { ScrollView } from "react-native-gesture-handler";
 
 const { height, width } = Dimensions.get("window");
 
@@ -37,10 +38,11 @@ class Profile extends Component {
     try {
       const value = await AsyncStorage.getItem("userdata");
       if (value !== null) {
+        const datas = JSON.parse(value);
         // We have data!!
-        this.setState({ userid: value });
-        this.getApiData(value);
-        // console.log(value, "val");
+        this.setState({ userid: datas.userData._id });
+        this.getApiData(datas.userData._id);
+        console.log(datas, "val");
       }
     } catch (error) {
       // Error retrieving data
@@ -67,13 +69,14 @@ class Profile extends Component {
       if (!result.cancelled) {
         if (focus == "face") {
           this.setState({ backImg: result.uri });
+          this.setProfile("back", result.uri);
         } else {
           await this.setState({ profileImg: result.uri });
-          this.setProfile();
+          this.setProfile("profile", result.uri);
         }
       }
 
-      console.log(result);
+      // console.log(result);
     } catch (E) {
       console.log(E);
     }
@@ -94,27 +97,27 @@ class Profile extends Component {
       )
       .then(async (res) => {
         if (res.data.status == 200) {
-          this.setState({ userdata: res.data.userData });
+          this.setState({
+            userdata: res.data.userData,
+            profileImg: url + res.data.userData.profileImage,
+            backImg: url + res.data.userData.backImage,
+          });
           // console.log(this.state.userdata, "data");
         }
       })
       .catch((err) => console.log(err, "err"));
   };
 
-  setProfile = () => {
+  setProfile = (name, path) => {
     fetch(`${url}api/profileimage`, {
       method: "POST",
-      body: this.createFormData(this.state.profileImg, {
+      body: this.createFormData(path, {
         userid: this.state.userid,
+        type: name == "profile" ? "profile" : "back",
       }),
     })
       .then((response) => response.json())
-      .then((response) => {
-        console.log("upload succes", response);
-        // this.setState({ visible: false });
-        // this.props.navigation.navigate("camera");
-        // this.setState({ photo: null });
-      })
+      .then((response) => {})
       .catch((error) => {
         console.log("upload error", error);
         alert("Upload failed!");
@@ -199,7 +202,10 @@ class Profile extends Component {
             }}
           >
             <View
-              style={{ paddingLeft: width * 0.01, paddingRight: width * 0.01 }}
+              style={{
+                paddingLeft: width * 0.01,
+                paddingRight: width * 0.01,
+              }}
             >
               <View style={{ alignItems: "center" }}>
                 <Text style={{ color: "#fff", fontSize: width * 0.04 }}>
@@ -226,7 +232,10 @@ class Profile extends Component {
             </View>
 
             <View
-              style={{ paddingLeft: width * 0.01, paddingRight: width * 0.01 }}
+              style={{
+                paddingLeft: width * 0.01,
+                paddingRight: width * 0.01,
+              }}
             >
               <View style={{ alignItems: "center" }}>
                 <Text style={{ color: "#fff", fontSize: width * 0.04 }}>

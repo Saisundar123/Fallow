@@ -14,13 +14,24 @@ import Draft from "./screens/toptabs/Draft";
 import Mygallery from "./screens/toptabs/Mygallery";
 import MyPost from "./screens/toptabs/MyPost";
 import MyTabBar from "./screens/MyTabBar";
+import Notifications from "./screens/Notifications";
+import Music from "./screens/Music";
+import Favorites from "./screens/Favorites";
 import { createStackNavigator } from "@react-navigation/stack";
 import { NavigationContainer } from "@react-navigation/native";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import BottomShe from "./screens/BottomShe";
-import { AntDesign, Feather, MaterialIcons, Entypo } from "@expo/vector-icons";
+import {
+  AntDesign,
+  Feather,
+  MaterialIcons,
+  Entypo,
+  FontAwesome,
+  Fontisto,
+  MaterialCommunityIcons,
+} from "@expo/vector-icons";
 import Test from "./screens/Test";
 
 const { height, width } = Dimensions.get("window");
@@ -44,22 +55,11 @@ export default function App() {
 const MyBottomTabs = () => {
   return (
     <Tabs.Navigator
+      lazy={false}
       tabBar={(props) => <MyTabBar {...props} />}
       tabBarOptions={{
-        // activeBackgroundColor: "red",
-        tabStyle: {
-          // borderTopLeftRadius: width * 0.06,
-          // backgroundColor: "transparent",
-          // position: "relative",
-          // left: 300,
-        },
         style: {
-          // backgroundColor: "transparent",
-          // borderTopLeftRadius: width * 0.08,
-          // borderTopRightRadius: width * 0.08,
-          // elevation: 5,
           height: height * 0.07,
-          // borderWidth: 3,
         },
         showLabel: false,
       }}
@@ -134,7 +134,7 @@ const MyBottomTabs = () => {
       />
       <Tabs.Screen
         name="notification"
-        component={Mygallery}
+        component={Notifications}
         options={{
           tabBarLabel: "",
           tabBarIcon: ({ color, size }) => (
@@ -181,10 +181,79 @@ const MyBottomTabs = () => {
 
 const MyTabs = () => {
   return (
-    <Tab.Navigator>
-      <Tab.Screen name="mygallery" component={Mygallery} />
-      <Tab.Screen name="mypost" component={MyPost} />
-      <Tab.Screen name="draft" component={Draft} />
+    <Tab.Navigator
+      tabBarOptions={{
+        showLabel: false,
+        showIcon: true,
+      }}
+    >
+      <Tab.Screen
+        name="mygallery"
+        component={Mygallery}
+        options={{
+          tabBarIcon: ({}) => {
+            return <AntDesign name="hearto" size={width * 0.05} />;
+          },
+        }}
+      />
+      <Tab.Screen
+        name="mypost"
+        component={MyPost}
+        options={{
+          tabBarIcon: ({}) => {
+            return (
+              <MaterialCommunityIcons
+                name="postage-stamp"
+                size={width * 0.05}
+              />
+            );
+          },
+        }}
+      />
+      <Tab.Screen
+        name="draft"
+        component={Draft}
+        options={{
+          tabBarIcon: ({}) => {
+            return <AntDesign name="hearto" size={width * 0.05} />;
+          },
+        }}
+      />
+    </Tab.Navigator>
+  );
+};
+
+const MusicTabs = () => {
+  return (
+    <Tab.Navigator
+      tabBarOptions={{
+        showIcon: true,
+        showLabel: false,
+        indicatorStyle: {
+          backgroundColor: "black",
+        },
+      }}
+    >
+      <Tab.Screen
+        name="Musics"
+        component={Music}
+        options={{
+          tabBarIcon: ({}) => {
+            return <FontAwesome name="music" size={width * 0.05} />;
+          },
+        }}
+      />
+      <Tab.Screen
+        name="favorites"
+        component={Favorites}
+        options={{
+          tabBarIcon: ({}) => {
+            return (
+              <FontAwesome name="bookmark" size={width * 0.05} color="black" />
+            );
+          },
+        }}
+      />
     </Tab.Navigator>
   );
 };
@@ -259,7 +328,7 @@ const MyStack = () => {
             headerShown: false,
           }}
         />
-        {/* <Stack.Screen name="profile" component={Profile} />  */}
+
         <Stack.Screen
           name="camera"
           component={ModelCamera}
@@ -269,6 +338,14 @@ const MyStack = () => {
           name="uploadvideo"
           component={UploadVideo}
           options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="music"
+          component={MusicTabs}
+          // options={{ headerShown: false }}
+          options={{
+            title: "Music",
+          }}
         />
       </Stack.Navigator>
     </NavigationContainer>

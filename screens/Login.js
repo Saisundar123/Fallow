@@ -68,16 +68,17 @@ class Login extends Component {
   };
 
   _storeData = async (data) => {
+    // console.log(data, "data");
     try {
-      await AsyncStorage.setItem("userdata", data.userData._id);
+      await AsyncStorage.setItem("userdata", JSON.stringify(data));
     } catch (error) {
       console.log(error, "err");
     }
-    try {
-      await AsyncStorage.setItem("username", data.userData.fullname);
-    } catch (error) {
-      console.log(error, "err");
-    }
+    // try {
+    //   await AsyncStorage.setItem("username", data.userData.fullname);
+    // } catch (error) {
+    //   console.log(error, "err");
+    // }
   };
 
   eyePress = () => {
