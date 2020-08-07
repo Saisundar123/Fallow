@@ -1,107 +1,115 @@
-import React from "react";
-import { Text, View, Button, Vibration, Platform } from "react-native";
-import { Notifications } from "expo";
-import * as Permissions from "expo-permissions";
-import Constants from "expo-constants";
+import React, { Component } from "react";
+import {
+  View,
+  Text,
+  AsyncStorage,
+  FlatList,
+  TouchableOpacity,
+  Dimensions,
+} from "react-native";
+import axios from "axios";
+import { url } from "../Main";
+import { Audio, Video } from "expo-av";
+import {
+  Entypo,
+  AntDesign,
+  FontAwesome,
+  Feather,
+  Fontisto,
+} from "@expo/vector-icons";
 
-export default class Draft extends React.Component {
-  state = {
-    expoPushToken: "",
-    notification: {},
-  };
+const { height, width } = Dimensions.get("screen");
 
-  registerForPushNotificationsAsync = async () => {
-    if (Constants.isDevice) {
-      const { status: existingStatus } = await Permissions.getAsync(
-        Permissions.NOTIFICATIONS
-      );
-      let finalStatus = existingStatus;
-      if (existingStatus !== "granted") {
-        const { status } = await Permissions.askAsync(
-          Permissions.NOTIFICATIONS
-        );
-        finalStatus = status;
-      }
-      if (finalStatus !== "granted") {
-        alert("Failed to get push token for push notification!");
-        return;
-      }
-      token = await Notifications.getExpoPushTokenAsync();
-      console.log(token);
-      this.setState({ expoPushToken: token });
-    } else {
-      alert("Must use physical device for Push Notifications");
-    }
-
-    if (Platform.OS === "android") {
-      Notifications.createChannelAndroidAsync("default", {
-        name: "default",
-        sound: true,
-        priority: "max",
-        vibrate: [0, 250, 250, 250],
-      });
-    }
-  };
-
-  componentDidMount() {
-    this.registerForPushNotificationsAsync();
-    this._notificationSubscription = Notifications.addListener(
-      this._handleNotification
-    );
+class Draft extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      draftVideos: "",
+      userData: "",
+    };
   }
 
-  _handleNotification = (notification) => {
-    Vibration.vibrate();
-    console.log(notification);
-    this.setState({ notification: notification });
-  };
+  async componentDidMount() {
+    await this.getUser();
+    // console.log(this.state.userData._id, "userdata");
+    axios
+      .get(`${url}api/draft/getDraft/${this.state.userData._id}`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+      .then(async (res) => {
+        if (res.data.status == 200) {
+          console.log(res.data.draftData.draft, "res");
+          this.setState({ draftVideos: res.data.draftData.draft });
 
-  // Can use this function below, OR use Expo's Push Notification Tool-> https://expo.io/dashboard/notifications
-  sendPushNotification = async () => {
-    const message = {
-      to: this.state.expoPushToken,
-      sound: "default",
-      title: "Fallow",
-      body: "The first Notification",
-      data: { data: "goes here" },
-      _displayInForeground: true,
-    };
-    const response = await fetch("https://exp.host/--/api/v2/push/send", {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Accept-encoding": "gzip, deflate",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(message),
-    });
-  };
+          // console.log(res.data, "nityuh");
+        }
+      })
+      .catch((err) => console.log(err, "err"));
+  }
 
+  getUser = async () => {
+    try {
+      const value = await AsyncStorage.getItem("userdata");
+      if (value !== null) {
+        const datas = JSON.parse(value);
+        // We have data!!
+        this.setState({ userData: datas.userData });
+      }
+    } catch (error) {
+      // Error retrieving data
+      console.log(err, "err");
+    }
+  };
   render() {
     return (
-      <View
-        style={{
-          flex: 1,
-          alignItems: "center",
-          justifyContent: "space-around",
-        }}
-      >
-        {/* <View style={{ alignItems: "center", justifyContent: "center" }}>
-          <Text>Origin: {this.state.notification.origin}</Text>
-          <Text>Data: {JSON.stringify(this.state.notification.data)}</Text>
-        </View> */}
-        <Button
-          title={"Press to Send Notification"}
-          onPress={() => this.sendPushNotification()}
+      <View style={{ flex: 1 }}>
+        <FlatList
+          data={this.state.draftVideos}
+          numColumns={3}
+          ListEmptyComponent={() => {
+            return (
+              <View
+                style={{
+                  flex: 1,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  paddingTop: width * 0.1,
+                }}
+              >
+                <Text>No Data</Text>
+              </View>
+            );
+          }}
+          renderItem={({ item, index }) => {
+            return (
+              <TouchableOpacity
+                style={{
+                  margin: width * 0.015,
+                  height: height * 0.25,
+                  width: width * 0.3,
+                }}
+                onPress={() => {
+                  this.props.navigation.navigate("uploadvideo", {
+                    uploadData: { uri: item.url },
+                    draft: true,
+                  });
+                }}
+              >
+                <Video
+                  resizeMode="cover"
+                  source={{ uri: url + item.url }}
+                  style={{ flex: 1, borderRadius: width * 0.02 }}
+                  shouldPlay={false}
+                />
+              </TouchableOpacity>
+            );
+          }}
         />
       </View>
     );
   }
 }
 
-/*  TO GET PUSH RECEIPTS, RUN THE FOLLOWING COMMAND IN TERMINAL, WITH THE RECEIPTID SHOWN IN THE CONSOLE LOGS
-
-    curl -H "Content-Type: application/json" -X POST "https://exp.host/--/api/v2/push/getReceipts" -d '{
-      "ids": ["YOUR RECEIPTID STRING HERE"]
-      }'
-*/
+export default Draft;

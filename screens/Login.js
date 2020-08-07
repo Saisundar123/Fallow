@@ -8,10 +8,14 @@ import {
   TextInput,
   Animated,
   AsyncStorage,
+  ActivityIndicator,
 } from "react-native";
 import { Entypo } from "@expo/vector-icons";
 import axios from "axios";
 import { url } from "./Main";
+import { Notifications } from "expo";
+import * as Permissions from "expo-permissions";
+import Constants from "expo-constants";
 
 const { height, width } = Dimensions.get("window");
 
@@ -22,8 +26,40 @@ class Login extends Component {
       email: "",
       password: "",
       passwordVisible: true,
+      activity: false,
+      expoPushToken: "",
+      notification: {},
+      errorMsg: "",
     };
   }
+
+  componentDidMount() {
+    this.registerForPushNotificationsAsync();
+  }
+
+  registerForPushNotificationsAsync = async () => {
+    if (Constants.isDevice) {
+      const { status: existingStatus } = await Permissions.getAsync(
+        Permissions.NOTIFICATIONS
+      );
+      let finalStatus = existingStatus;
+      if (existingStatus !== "granted") {
+        const { status } = await Permissions.askAsync(
+          Permissions.NOTIFICATIONS
+        );
+        finalStatus = status;
+      }
+      if (finalStatus !== "granted") {
+        alert("Failed to get push token for push notification!");
+        return;
+      }
+      token = await Notifications.getExpoPushTokenAsync();
+      // console.log(token, "token");
+      this.setState({ expoPushToken: token });
+    } else {
+      alert("Must use physical device for Push Notifications");
+    }
+  };
 
   validateLogin = () => {
     const { email, password } = this.state;
@@ -37,14 +73,16 @@ class Login extends Component {
   };
 
   onPressLogin = (email, password) => {
+    // console.log(this.state.expoPushToken, "push");
     // console.log(email, password, "oooooo");
-    // this.setState({ processing: true });
+    this.setState({ activity: true });
     axios
       .post(
         `${url}api/findUser`,
         {
           email: email,
           password: password,
+          expotoken: this.state.expoPushToken,
         },
         {
           headers: {
@@ -58,10 +96,14 @@ class Login extends Component {
           this.setState({
             email: "",
             password: "",
+            activity: false,
           });
           this.props.onLogin();
 
-          console.log(res.data.userData.fullname);
+          // console.log(res.data.userData.fullname);
+        } else if (res.data.status == 400) {
+          this.setState({ errorMsg: res.data.msg, activity: false });
+          console.log(res.data);
         }
       })
       .catch((err) => console.log(err, "err"));
@@ -145,9 +187,21 @@ class Login extends Component {
         </View>
         <AccountButton
           name="Log in"
+          activity={this.state.activity}
           // onPress={() => this.props.onLogin()}
           onPress={() => this.validateLogin()}
         />
+        <View style={{ alignItems: "center" }}>
+          <Text
+            style={{
+              color: "red",
+              fontSize: width * 0.04,
+              fontFamily: "Roboto-Regular",
+            }}
+          >
+            {this.state.errorMsg}
+          </Text>
+        </View>
         <View
           style={{
             alignItems: "center",
@@ -195,36 +249,6 @@ class Login extends Component {
           </TouchableOpacity>
         </View>
 
-        {/* <View
-          style={{
-            padding: width * 0.05,
-            alignSelf: "center",
-            width,
-          }}
-        >
-          <Text>
-            By Signing Up you accept the{" "}
-            <Text
-              style={{
-                fontSize: width * 0.04,
-                fontWeight: "bold",
-                color: "skyblue",
-              }}
-            >
-              Terms of Services
-            </Text>{" "}
-            and{" "}
-            <Text
-              style={{
-                fontSize: width * 0.04,
-                fontWeight: "bold",
-                color: "skyblue",
-              }}
-            >
-              Privacy Policy
-            </Text>
-          </Text>
-        </View> */}
         <View style={{ alignSelf: "center", flexDirection: "row" }}>
           <View>
             <Text>Already have a acoount ?</Text>
@@ -251,6 +275,38 @@ class Login extends Component {
 
 export default Login;
 
+// const AccountButton = (props) => {
+//   return (
+//     <View>
+//       <TouchableOpacity
+//         style={{
+//           height: height * 0.06,
+//           width: width * 0.85,
+//           backgroundColor: "#b163e7",
+//           alignSelf: "center",
+//           alignItems: "center",
+//           justifyContent: "center",
+//           borderRadius: width * 0.02,
+//           marginBottom: width * 0.03,
+//           borderWidth: 2,
+//           borderColor: "#b163e7",
+//         }}
+//         onPress={() => props.onPress()}
+//       >
+//         <Text
+//           style={{
+//             fontWeight: "bold",
+//             fontSize: width * 0.04,
+//             color: "#ffffff",
+//           }}
+//         >
+//           {props.name}
+//         </Text>
+//       </TouchableOpacity>
+//     </View>
+//   );
+// };
+
 const AccountButton = (props) => {
   return (
     <View>
@@ -261,11 +317,14 @@ const AccountButton = (props) => {
           backgroundColor: "#b163e7",
           alignSelf: "center",
           alignItems: "center",
-          justifyContent: "center",
+          justifyContent: "space-between",
+          paddingLeft: width * 0.35,
+          paddingRight: width * 0.04,
           borderRadius: width * 0.02,
           marginBottom: width * 0.03,
           borderWidth: 2,
           borderColor: "#b163e7",
+          flexDirection: "row",
         }}
         onPress={() => props.onPress()}
       >
@@ -278,6 +337,11 @@ const AccountButton = (props) => {
         >
           {props.name}
         </Text>
+        <View style={{}}>
+          {props.activity ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : null}
+        </View>
       </TouchableOpacity>
     </View>
   );

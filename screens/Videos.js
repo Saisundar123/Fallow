@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { Component, PureComponent, useEffect } from "react";
 import {
   View,
   Text,
@@ -15,11 +15,13 @@ import {
   Animated,
   TextInput,
   AsyncStorage,
+  Pressable,
 } from "react-native";
 import axios from "axios";
 import * as Sharing from "expo-sharing";
 import { Audio, Video } from "expo-av";
 import * as MediaLibrary from "expo-media-library";
+import { useFocusEffect } from "@react-navigation/native";
 import * as FileSystem from "expo-file-system";
 import * as Permissions from "expo-permissions";
 import VideoComments from "../screens/VideoComments";
@@ -35,10 +37,12 @@ import {
 import RBSheet from "react-native-raw-bottom-sheet";
 import { url } from "./Main";
 import VideoTop from "./VideoTop";
+import VideoPlayer from "expo-video-player";
+import RenderItem from "./RenderItem";
 
 const { height, width } = Dimensions.get("screen");
 
-class Videos extends Component {
+class Videos extends PureComponent {
   constructor(props) {
     super(props);
     this.state = {
@@ -76,7 +80,7 @@ class Videos extends Component {
     this.setState({ downloading: true });
     const uri = url + item.url;
     let fileUri = FileSystem.documentDirectory + "small.mp4";
-
+    // console.log(fileUri, "kkkkk");
     await FileSystem.downloadAsync(uri, fileUri)
       .then(({ uri }) => {
         datas[index].downloads += 1;
@@ -123,6 +127,7 @@ class Videos extends Component {
     const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
     if (status === "granted") {
       const asset = await MediaLibrary.createAssetAsync(fileUri);
+      console.log(asset, "assest");
       await MediaLibrary.createAlbumAsync("Fallow", asset, false);
     }
   };
@@ -134,9 +139,8 @@ class Videos extends Component {
       const value = await AsyncStorage.getItem("userdata");
       if (value !== null) {
         const datas = JSON.parse(value);
-        // We have data!!
-        await this.setState({ userid: datas.userData });
-        // console.log(this.state.userid, "userid");
+        await this.setState({ userData: datas.userData });
+        // console.log(this.state.userData, "userid");
         // console.log(datas, "val");
       }
     } catch (error) {
@@ -163,19 +167,26 @@ class Videos extends Component {
             item.liked = false;
             item.id = i.toString();
           });
-          this.setState({ data: res.data.videos });
-          // console.log(this.state.data, "datas");
+          console.log(this.state.page, "pages");
+          if (this.state.page == 0) {
+            this.setState({ data: res.data.videos });
+          } else {
+            this.setState({
+              data: this.state.data.concat(res.data.videos),
+            });
+          }
         }
       })
       .catch((err) => console.log(err, "err"));
   };
 
   cdRotate = () => {
+    this.state.rotate.setValue(0);
     Animated.timing(this.state.rotate, {
       toValue: 1,
       duration: 5000,
       useNativeDriver: true,
-    }).start();
+    }).start(() => this.cdRotate());
   };
 
   perform = async (target, index, item) => {
@@ -193,9 +204,7 @@ class Videos extends Component {
         break;
       case "download":
         await this.downloadFile(item, index);
-        // console.log("hii");
-        // datas[index].whatsapp += 1;
-        // this.addLike(item, index);
+
         break;
       case "share":
         // this.onShare();
@@ -208,10 +217,11 @@ class Videos extends Component {
   addLike = (item, index) => {
     // console.log(this.state.data[0], "ppppp");
     axios
-      .post(
+      .put(
         `${url}api/video/addall`,
         {
           id: item._id,
+          userid: this.state.userData._id,
           update: {
             downloads: this.state.data[index].downloads,
             likes: this.state.data[index].likes,
@@ -248,47 +258,63 @@ class Videos extends Component {
     }).start();
   };
 
-  pauseVideo = (index) => {
-    // this.videoRef.pauseAsync();
-    if (index === this.state.value) {
-      this.setState({ value: "" });
-      // this[index].pauseAsync();
-    } else {
-      this.setState({ value: index });
-    }
-  };
-
   onchangeText = (text) => {
     this.setState({ newComment: text });
   };
 
-  onSend = (index) => {
-    this.setState({ newComment: "" });
+  // shouldComponentUpdate(nextProps) {
+  //   console.log(nextProps, "props");
+  // }
+
+  onSend = async (index, videoid) => {
     const datas = [...this.state.data];
     const object = {
-      url: this.state.userid.profileImage,
-      name: this.state.userid.fullname,
+      url: this.state.userData.profileImage,
+      name: this.state.userData.fullname,
       comment: this.state.newComment,
     };
     datas[index].comments.push(object);
     this.setState({ data: datas });
-
+    this.processComment(videoid);
+    this.setState({ newComment: "" });
     // console.log(text, index);
   };
 
-  componentWillUnmount() {
-    console.log("hiiii4");
-  }
+  processComment = (videoid) => {
+    axios
+      .put(
+        `${url}api/video/addcomment`,
+        {
+          videoid: videoid,
+          profileurl: this.state.userData.profileImage,
+          comment: this.state.newComment,
+          name: this.state.userData.fullname,
+        },
+
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      )
+      .then(async (res) => {
+        if (res.data.status == 200) {
+          console.log(res.data, "res");
+        }
+      })
+      .catch((err) => console.log(err, "err"));
+  };
 
   onFallow = (id) => {
-    // console.log(id, this.state.userid, "ids");
+    // console.log("hjhj");
+    // console.log(id, this.state.userData, "ids");
     axios
       .post(
         `${url}api/followUnfollow`,
         {
           type: "follow",
           followerid: id,
-          userid: this.state.userid._id,
+          userid: this.state.userData._id,
         },
         {
           headers: {
@@ -298,19 +324,45 @@ class Videos extends Component {
       )
       .then(async (res) => {
         if (res.data.status == 200) {
-          console.log(res.data, "fallow");
+          this.sendPushNotification(res.data.expotoken);
+          // console.log(res.data, "fallow");
         }
       })
       .catch((err) => console.log(err, "err"));
   };
 
-  changePage = async (index) => {
+  sendPushNotification = async (expoToken) => {
+    // console.log(this.state.expoPushToken, "exo");
+    const message = {
+      to: expoToken,
+      sound: "default",
+      title: "Fallow",
+      body: `${this.state.userData.fullname} is following you`,
+      data: { data: "goes here" },
+      _displayInForeground: true,
+    };
+    const response = await fetch("https://exp.host/--/api/v2/push/send", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Accept-encoding": "gzip, deflate",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(message),
+    });
+  };
+
+  changePage = async () => {
     await this.setState({ page: Number(this.state.page) + 1 });
     this.getApiData();
   };
 
-  onEnd = () => {
-    console.log("ending");
+  footerRender = () => {
+    return (
+      <View style={{ bottom: width * 0.2 }}>
+        <ActivityIndicator size="large" animating />
+      </View>
+    );
   };
 
   render() {
@@ -326,58 +378,103 @@ class Videos extends Component {
       inputRange: [0, 1],
       outputRange: [0, height * 0.48],
     });
-    // console.log(this.state.data.length, "data");
     return (
       <View style={{ height: height * 0.88 }}>
-        <FlatList
-          data={this.state.data}
-          scrollEnabled={this.state.commentSlide ? false : true}
-          // onEndReached={this.changePage}
-          onScroll={async (e) => {
-            let offset = e.nativeEvent.contentOffset.y;
-            let index = parseInt(offset / (height * 0.86));
-            // console.log(offset, index, "yyyyyy");
-            // your cell height
-            if (this.state.value !== index) {
-              await this.setState({ value: index });
-              // console.log(this.state.value, "kk");
-            }
-          }}
-          snapToInterval={height * 0.885}
-          decelerationRate={"fast"}
-          ListEmptyComponent={() => {
-            return (
-              <View
-                style={{
-                  flex: 1,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  // backgroundColor: "red",
-                  height,
-                }}
-              >
-                <ActivityIndicator size="large" />
-              </View>
-            );
-          }}
-          renderItem={({ item, index }) => {
-            // console.log(item, "com");
-            return (
-              <View
-                style={{
-                  width,
-                  backgroundColor: "black",
-                }}
-              >
+        <View>
+          <FlatList
+            data={this.state.data}
+            // maxToRenderPerBatch={5}
+            // removeClippedSubviews={true}
+            // initialNumToRender={3}
+            // windowSize={15}
+            // legacyImplementation={true}
+            // updateCellsBatchingPeriod={5}
+            scrollEnabled={this.state.commentSlide ? false : true}
+            onEndReached={() => {
+              this.changePage();
+              console.log("reac");
+            }}
+            ListFooterComponent={this.footerRender}
+            onEndReachedThreshold={1}
+            snapToAlignment={"start"}
+            onScroll={async (e) => {
+              let offset = e.nativeEvent.contentOffset.y;
+              let index = parseInt(offset / (height * 0.86));
+              // console.log(index, "yyyyyy");
+              // your cell height
+              if (this.state.value !== index) {
+                await this.setState({ value: index });
+              }
+            }}
+            snapToInterval={height * 0.885}
+            decelerationRate={"fast"}
+            ListEmptyComponent={() => {
+              return (
                 <View
                   style={{
-                    height: height * 0.885,
-                    width,
+                    flex: 1,
+                    alignItems: "center",
+                    justifyContent: "center",
                     // backgroundColor: "red",
+                    height,
                   }}
                 >
-                  <TouchableHighlight onPress={() => this.pauseVideo(index)}>
+                  <ActivityIndicator size="large" />
+                </View>
+              );
+            }}
+            renderItem={({ item, index }) => {
+              // const videoSource = url + item.url;
+              return (
+                // <RenderItem
+                //   videoHeight={videoHeight}
+                //   source={videoSource}
+                //   // shouldPlay={index === this.state.value ? true : false}
+                //   shouldPlay={true}
+                //   commentHeight={commentHeight}
+                //   commentValue={this.state.newComment}
+                //   onBackPress={this.onBackPress}
+                //   comments={item.comments}
+                //   onchangeText={(text) => {
+                //     this.onchangeText(text);
+                //   }}
+                //   onSend={() => this.onSend(index, item._id)}
+                //   commentSlide={this.state.commentSlide}
+                //   index={index}
+                //   // userid={item.userId}
+                //   cdRotating={cdRotating}
+                //   item={item}
+                //   commentSlide={this.state.commentSlide}
+                //   onFallow={() => this.onFallow(item.userId)}
+                //   perform={this.perform}
+                //   downloading={this.state.downloading}
+                //   {...this.props}
+                // />
+                <View
+                  style={{
+                    width,
+                    backgroundColor: "black",
+                  }}
+                >
+                  <View
+                    style={{
+                      height: height * 0.885,
+                      width,
+                    }}
+                  >
                     <Animated.View style={{ height: videoHeight, width }}>
+                      {/* <VideoPlayer
+                      ref={(ref) => (this.videoRef = ref)}
+                      videoProps={{
+                        shouldPlay: index === this.state.value ? true : false,
+                        resizeMode: Video.RESIZE_MODE_CONTAIN,
+                        // height: videoHeight,
+                        source: {
+                          uri: videoSource,
+                        },
+                      }}
+                    /> */}
+
                       <Video
                         resizeMode="contain"
                         source={{ uri: url + item.url }}
@@ -386,332 +483,663 @@ class Videos extends Component {
                         // onLoad={() => console.log("startedn")}
                         shouldPlay={index === this.state.value ? true : false}
                       />
-                      {this.state.value == index ? (
-                        <View
-                          style={{
-                            position: "absolute",
-                            alignSelf: "center",
-                            height: height * 0.45,
-                            justifyContent: "flex-end",
-                          }}
-                        >
-                          <ActivityIndicator
-                            size="large"
-                            color="red"
-                            animating={true}
-                          />
-                        </View>
-                      ) : null}
                     </Animated.View>
-                  </TouchableHighlight>
-                  <VideoComments
-                    commentHeight={commentHeight}
-                    onBackPress={this.onBackPress}
-                    comments={item.comments}
-                    onChangeText={this.onchangeText}
-                    onSend={() => this.onSend(index)}
-                  />
-                </View>
-                {this.state.commentSlide ? null : (
-                  // <VideoTop
-                  //   items={item}
-                  //   cdRotating={cdRotating}
-                  //   perform={(action) => this.perform(action, index, item)}
-                  //   {...this.props}
-                  // />
-                  <View
-                    style={{
-                      position: "absolute",
-                      paddingRight: width * 0.04,
-                      paddingLeft: width * 0.04,
-                      // backgroundColor: "red",
-                      width,
-                      height: height * 0.8,
-                      marginTop: width * 0.1,
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                      alignItems: "flex-end",
-                    }}
-                  >
+                    <VideoComments
+                      commentHeight={commentHeight}
+                      onBackPress={this.onBackPress}
+                      comments={item.comments}
+                      onChangeText={this.onchangeText}
+                      onSend={() => this.onSend(index)}
+                    />
+                  </View>
+                  {/* {this.state.commentSlide ? null : (
+                    // <VideoTop
+                    //   items={item}
+                    //   cdRotating={cdRotating}
+                    //   perform={(action) => this.perform(action, index, item)}
+                    //   {...this.props}
+                    // />
                     <View
                       style={{
-                        justifyContent: "space-between",
-                        paddingBottom: width * 0.1,
+                        position: "absolute",
+                        paddingRight: width * 0.04,
+                        paddingLeft: width * 0.04,
                         // backgroundColor: "red",
-                        width: width * 0.63,
+                        width,
                         height: height * 0.8,
-                        paddingTop: width * 0.1,
-                      }}
-                    >
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          alignSelf: "flex-end",
-                        }}
-                      >
-                        <TouchableOpacity
-                          style={{ paddingRight: width * 0.03 }}
-                          onPress={() =>
-                            this.props.navigation.navigate("camera", {
-                              live: true,
-                            })
-                          }
-                        >
-                          <Text
-                            style={{
-                              fontSize: width * 0.035,
-                              fontWeight: "bold",
-                              color: "#fff",
-                              // opacity: 0.7,
-                            }}
-                          >
-                            Live
-                          </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity>
-                          <Text
-                            style={{
-                              fontSize: width * 0.035,
-                              fontWeight: "bold",
-                              color: "#fff",
-                              // opacity: 1,
-                            }}
-                          >
-                            For You
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-                      <View>
-                        <View
-                          style={{
-                            flexDirection: "row",
-                            alignItems: "center",
-                          }}
-                        >
-                          <TouchableOpacity
-                            style={{
-                              paddingBottom: width * 0.02,
-                            }}
-                            onPress={() =>
-                              this.props.navigation.navigate("userProfile", {
-                                userid: item.userId,
-                              })
-                            }
-                          >
-                            <Text
-                              style={{
-                                color: "#fff",
-                                fontWeight: "bold",
-                                fontSize: width * 0.05,
-                              }}
-                            >
-                              {item.fullname}
-                            </Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            style={{
-                              flexDirection: "row",
-                              borderWidth: 1,
-                              borderRadius: width * 0.04,
-                              borderColor: "#fff",
-                              height: height * 0.035,
-                              width: width * 0.17,
-                              alignItems: "center",
-                              justifyContent: "space-between",
-                              paddingRight: width * 0.013,
-                              paddingLeft: width * 0.01,
-                              marginLeft: width * 0.02,
-                            }}
-                            onPress={() => this.onFallow(item.userId)}
-                          >
-                            <View>
-                              <MaterialIcons
-                                name="add"
-                                size={width * 0.04}
-                                color="#fff"
-                              />
-                            </View>
-                            <View>
-                              <Text
-                                style={{
-                                  color: "#fff",
-                                  fontWeight: "bold",
-                                  fontSize: width * 0.03,
-                                }}
-                              >
-                                Fallow
-                              </Text>
-                            </View>
-                          </TouchableOpacity>
-                        </View>
-                        <View>
-                          <Text style={{ color: "#fff" }}>{item.caption}</Text>
-                        </View>
-                      </View>
-                    </View>
-                    <View
-                      style={{
-                        // backgroundColor: "red",
-                        marginBottom: width * 0.1,
+                        marginTop: width * 0.1,
+                        flexDirection: "row",
+                        justifyContent: "space-between",
                         alignItems: "flex-end",
                       }}
                     >
                       <View
                         style={{
-                          paddingBottom: width * 0.02,
-                          alignItems: "center",
+                          justifyContent: "space-between",
+                          paddingBottom: width * 0.1,
+                          // backgroundColor: "red",
+                          width: width * 0.63,
+                          height: height * 0.8,
+                          paddingTop: width * 0.1,
                         }}
                       >
-                        <TouchableOpacity
-                          onPress={() => this.perform("like", index, item)}
+                        <View
                           style={{
-                            height: width * 0.12,
-                            width: width * 0.12,
-                            backgroundColor: "rgba(52, 52, 52, 0.8)",
-                            borderRadius: width * 0.02,
-                            alignItems: "center",
-                            justifyContent: "center",
+                            flexDirection: "row",
+                            alignSelf: "flex-end",
                           }}
                         >
-                          <MaterialCommunityIcons
-                            name="hand-okay"
-                            size={width * 0.08}
-                            color={item.liked ? "red" : "#fff"}
-                          />
-                        </TouchableOpacity>
+                          <TouchableOpacity
+                            style={{ paddingRight: width * 0.03 }}
+                            onPress={() =>
+                              this.props.navigation.navigate("camera", {
+                                live: true,
+                              })
+                            }
+                          >
+                            <Text
+                              style={{
+                                fontSize: width * 0.035,
+                                // fontWeight: "bold",
+                                fontFamily: "Roboto-Bold",
+                                color: "#fff",
+                                // opacity: 0.7,
+                              }}
+                            >
+                              Live
+                            </Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity>
+                            <Text
+                              style={{
+                                fontSize: width * 0.035,
+                                fontFamily: "Roboto-Bold",
+                                color: "#fff",
+                                // opacity: 1,
+                              }}
+                            >
+                              For You
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
                         <View>
-                          <Text
+                          <View
                             style={{
-                              color: "#fff",
-                              fontSize: width * 0.035,
-                              fontWeight: "bold",
+                              flexDirection: "row",
+                              alignItems: "center",
                             }}
                           >
-                            {item.likes}
-                          </Text>
+                            <TouchableOpacity
+                              style={{
+                                paddingBottom: width * 0.02,
+                              }}
+                              onPress={() =>
+                                this.props.navigation.navigate("userProfile", {
+                                  userid: item.userId,
+                                })
+                              }
+                            >
+                              <Text
+                                style={{
+                                  color: "#fff",
+                                  fontFamily: "Roboto-Bold",
+                                  fontSize: width * 0.05,
+                                }}
+                              >
+                                {item.fullname}
+                              </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={{
+                                flexDirection: "row",
+                                borderWidth: 1,
+                                borderRadius: width * 0.04,
+                                borderColor: "#fff",
+                                height: height * 0.035,
+                                width: width * 0.17,
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                paddingRight: width * 0.013,
+                                paddingLeft: width * 0.01,
+                                marginLeft: width * 0.02,
+                              }}
+                              onPress={() => this.onFallow(item.userId)}
+                            >
+                              <View>
+                                <MaterialIcons
+                                  name="add"
+                                  size={width * 0.04}
+                                  color="#fff"
+                                />
+                              </View>
+                              <View>
+                                <Text
+                                  style={{
+                                    color: "#fff",
+                                    fontFamily: "Roboto-Bold",
+                                    fontSize: width * 0.03,
+                                  }}
+                                >
+                                  Fallow
+                                </Text>
+                              </View>
+                            </TouchableOpacity>
+                          </View>
+                          <View>
+                            <Text
+                              style={{
+                                color: "#fff",
+                                fontFamily: "Roboto-Regular",
+                              }}
+                            >
+                              {item.caption}
+                            </Text>
+                          </View>
                         </View>
                       </View>
                       <View
                         style={{
-                          paddingBottom: width * 0.02,
-                          alignItems: "center",
+                          // backgroundColor: "red",
+                          marginBottom: width * 0.1,
+                          alignItems: "flex-end",
                         }}
                       >
-                        <TouchableOpacity
-                          onPress={() => this.perform("comment", index, null)}
+                        <View
                           style={{
-                            height: width * 0.12,
-                            width: width * 0.12,
-                            backgroundColor: "rgba(52, 52, 52, 0.8)",
-                            borderRadius: width * 0.02,
+                            paddingBottom: width * 0.02,
                             alignItems: "center",
-                            justifyContent: "center",
                           }}
                         >
-                          <Entypo
-                            name="message"
-                            size={width * 0.07}
-                            color="#fff"
-                          />
-                        </TouchableOpacity>
-                        <View>
-                          <Text
-                            style={{ color: "#fff", fontSize: width * 0.035 }}
+                          <TouchableOpacity
+                            onPress={() => this.perform("like", index, item)}
+                            style={{
+                              height: width * 0.12,
+                              width: width * 0.12,
+                              backgroundColor: "rgba(52, 52, 52, 0.8)",
+                              borderRadius: width * 0.02,
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
                           >
-                            {item.comments.legth}
-                          </Text>
+                            <MaterialCommunityIcons
+                              name="hand-okay"
+                              size={width * 0.08}
+                              color={item.liked ? "red" : "#fff"}
+                              // color={
+                              //   this.state.userData.likedVideos.includes(item._id)
+                              //     ? "red"
+                              //     : "#fff"
+                              // }
+                            />
+                          </TouchableOpacity>
+                          <View>
+                            <Text
+                              style={{
+                                color: "#fff",
+                                fontSize: width * 0.035,
+                                fontFamily: "Roboto-Bold",
+                              }}
+                            >
+                              {item.likes}
+                            </Text>
+                          </View>
                         </View>
-                      </View>
-
-                      <View
-                        style={{
-                          alignItems: "center",
-                        }}
-                      >
-                        <TouchableOpacity
-                          onPress={() => this.perform("download", index, item)}
+                        <View
                           style={{
-                            height: width * 0.12,
-                            width: width * 0.12,
-                            backgroundColor: "rgba(52, 52, 52, 0.8)",
-                            borderRadius: width * 0.02,
+                            paddingBottom: width * 0.02,
                             alignItems: "center",
-                            justifyContent: "center",
                           }}
                         >
-                          {this.state.downloading ? (
-                            <ActivityIndicator size="small" color="#fff" />
-                          ) : (
-                            <Feather
-                              name="download"
+                          <TouchableOpacity
+                            onPress={() => this.perform("comment", index, null)}
+                            style={{
+                              height: width * 0.12,
+                              width: width * 0.12,
+                              backgroundColor: "rgba(52, 52, 52, 0.8)",
+                              borderRadius: width * 0.02,
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                          >
+                            <Entypo
+                              name="message"
                               size={width * 0.07}
                               color="#fff"
                             />
-                          )}
-                        </TouchableOpacity>
-                        <View>
-                          <Text
-                            style={{ color: "#fff", fontSize: width * 0.035 }}
-                          >
-                            {item.downloads}
-                          </Text>
+                          </TouchableOpacity>
+                          <View>
+                            <Text
+                              style={{ color: "#fff", fontSize: width * 0.035 }}
+                            >
+                              0
+                            </Text>
+                          </View>
                         </View>
-                      </View>
 
-                      <View
-                        style={{
-                          paddingBottom: width * 0.1,
-                          alignItems: "center",
-                        }}
-                      >
-                        <TouchableOpacity
-                          onPress={() => this.perform("share", index, item)}
+                        <View
                           style={{
-                            height: width * 0.12,
-                            width: width * 0.12,
-                            backgroundColor: "rgba(52, 52, 52, 0.8)",
-                            borderRadius: width * 0.02,
                             alignItems: "center",
-                            justifyContent: "center",
                           }}
                         >
-                          <MaterialCommunityIcons
-                            name="share"
-                            size={width * 0.07}
-                            color="#fff"
-                          />
-                        </TouchableOpacity>
-                        <View>
-                          <Text
-                            style={{ color: "#fff", fontSize: width * 0.035 }}
+                          <TouchableOpacity
+                            onPress={() =>
+                              this.perform("download", index, item)
+                            }
+                            style={{
+                              height: width * 0.12,
+                              width: width * 0.12,
+                              backgroundColor: "rgba(52, 52, 52, 0.8)",
+                              borderRadius: width * 0.02,
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
                           >
-                            {item.whatsapp}
-                          </Text>
+                            {this.state.downloading ? (
+                              <ActivityIndicator size="small" color="#fff" />
+                            ) : (
+                              <Feather
+                                name="download"
+                                size={width * 0.07}
+                                color="#fff"
+                              />
+                            )}
+                          </TouchableOpacity>
+                          <View>
+                            <Text
+                              style={{
+                                color: "#fff",
+                                fontSize: width * 0.035,
+                                fontFamily: "Roboto-Bold",
+                              }}
+                            >
+                              {item.downloads}
+                            </Text>
+                          </View>
+                        </View>
+
+                        <View
+                          style={{
+                            paddingBottom: width * 0.1,
+                            alignItems: "center",
+                          }}
+                        >
+                          <TouchableOpacity
+                            onPress={() => this.perform("share", index, item)}
+                            style={{
+                              height: width * 0.12,
+                              width: width * 0.12,
+                              backgroundColor: "rgba(52, 52, 52, 0.8)",
+                              borderRadius: width * 0.02,
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                          >
+                            <MaterialCommunityIcons
+                              name="share"
+                              size={width * 0.07}
+                              color="#fff"
+                            />
+                          </TouchableOpacity>
+                          <View>
+                            <Text
+                              style={{
+                                color: "#fff",
+                                fontSize: width * 0.035,
+                                fontFamily: "Roboto-Bold",
+                              }}
+                            >
+                              {item.whatsapp}
+                            </Text>
+                          </View>
+                        </View>
+
+                        <View style={{ paddingBottom: width * 0.02 }}>
+                          <Animated.Image
+                            resizeMode="contain"
+                            source={{
+                              uri:
+                                "https://www.flaticon.com/premium-icon/icons/svg/3083/3083400.svg",
+                            }}
+                            style={{
+                              height: width * 0.15,
+                              width: width * 0.15,
+                              transform: [{ rotateZ: cdRotating }],
+                            }}
+                          />
                         </View>
                       </View>
-
-                      <View style={{ paddingBottom: width * 0.02 }}>
-                        <Animated.Image
-                          resizeMode="contain"
-                          source={{
-                            uri:
-                              "https://www.flaticon.com/premium-icon/icons/svg/3083/3083400.svg",
-                          }}
-                          style={{
-                            height: width * 0.15,
-                            width: width * 0.15,
-                            transform: [{ rotateZ: cdRotating }],
-                          }}
-                        />
-                      </View>
                     </View>
-                  </View>
-                )}
+                  )} */}
+                </View>
+              );
+            }}
+            keyExtractor={(item, index) => `${index}`}
+          />
+        </View>
+        {this.state.commentSlide ? null : this.state.data.length >= 1 ? ( // /> //   {...this.props} //   perform={(action) => this.perform(action, index, item)} //   cdRotating={cdRotating} //   items={item} // <VideoTop
+          <View
+            style={{
+              position: "absolute",
+              paddingRight: width * 0.04,
+              paddingLeft: width * 0.04,
+              // backgroundColor: "red",
+              width,
+              height: height * 0.8,
+              marginTop: width * 0.1,
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "flex-end",
+            }}
+          >
+            <View
+              style={{
+                justifyContent: "space-between",
+                paddingBottom: width * 0.1,
+                // backgroundColor: "red",
+                width: width * 0.63,
+                height: height * 0.8,
+                paddingTop: width * 0.1,
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignSelf: "flex-end",
+                }}
+              >
+                <TouchableOpacity
+                  style={{ paddingRight: width * 0.03 }}
+                  onPress={() =>
+                    this.props.navigation.navigate("camera", {
+                      live: true,
+                    })
+                  }
+                >
+                  <Text
+                    style={{
+                      fontSize: width * 0.035,
+                      // fontWeight: "bold",
+                      fontFamily: "Roboto-Bold",
+                      color: "#fff",
+                      // opacity: 0.7,
+                    }}
+                  >
+                    Live
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity>
+                  <Text
+                    style={{
+                      fontSize: width * 0.035,
+                      fontFamily: "Roboto-Bold",
+                      color: "#fff",
+                      // opacity: 1,
+                    }}
+                  >
+                    For You
+                  </Text>
+                </TouchableOpacity>
               </View>
-            );
-          }}
-          keyExtractor={(item, index) => `${index}`}
-        />
+              <View>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                  }}
+                >
+                  <TouchableOpacity
+                    style={{
+                      paddingBottom: width * 0.02,
+                    }}
+                    onPress={() =>
+                      this.props.navigation.navigate("userProfile", {
+                        userid: this.state.data[this.state.value].userId,
+                      })
+                    }
+                  >
+                    <Text
+                      style={{
+                        color: "#fff",
+                        fontFamily: "Roboto-Bold",
+                        fontSize: width * 0.05,
+                      }}
+                    >
+                      {this.state.data[this.state.value].fullname}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={{
+                      flexDirection: "row",
+                      borderWidth: 1,
+                      borderRadius: width * 0.04,
+                      borderColor: "#fff",
+                      height: height * 0.035,
+                      width: width * 0.17,
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      paddingRight: width * 0.013,
+                      paddingLeft: width * 0.01,
+                      marginLeft: width * 0.02,
+                    }}
+                    onPress={() =>
+                      this.onFallow(this.state.data[this.state.value].userId)
+                    }
+                  >
+                    <View>
+                      <MaterialIcons
+                        name="add"
+                        size={width * 0.04}
+                        color="#fff"
+                      />
+                    </View>
+                    <View>
+                      <Text
+                        style={{
+                          color: "#fff",
+                          fontFamily: "Roboto-Bold",
+                          fontSize: width * 0.03,
+                        }}
+                      >
+                        Fallow
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                </View>
+                <View>
+                  <Text
+                    style={{
+                      color: "#fff",
+                      fontFamily: "Roboto-Regular",
+                    }}
+                  >
+                    {this.state.data[this.state.value].caption}
+                  </Text>
+                </View>
+              </View>
+            </View>
+            <View
+              style={{
+                // backgroundColor: "red",
+                marginBottom: width * 0.1,
+                alignItems: "flex-end",
+              }}
+            >
+              <View
+                style={{
+                  paddingBottom: width * 0.02,
+                  alignItems: "center",
+                }}
+              >
+                <TouchableOpacity
+                  onPress={() =>
+                    this.perform(
+                      "like",
+                      this.state.value,
+                      this.state.data[this.state.value]
+                    )
+                  }
+                  style={{
+                    height: width * 0.12,
+                    width: width * 0.12,
+                    backgroundColor: "rgba(52, 52, 52, 0.8)",
+                    borderRadius: width * 0.02,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <MaterialCommunityIcons
+                    name="hand-okay"
+                    size={width * 0.08}
+                    color={
+                      this.state.data[this.state.value].liked ? "red" : "#fff"
+                    }
+                    // color={
+                    //   this.state.userData.likedVideos.includes(item._id)
+                    //     ? "red"
+                    //     : "#fff"
+                    // }
+                  />
+                </TouchableOpacity>
+                <View>
+                  <Text
+                    style={{
+                      color: "#fff",
+                      fontSize: width * 0.035,
+                      fontFamily: "Roboto-Bold",
+                    }}
+                  >
+                    {this.state.data[this.state.value].likes}
+                  </Text>
+                </View>
+              </View>
+              <View
+                style={{
+                  paddingBottom: width * 0.02,
+                  alignItems: "center",
+                }}
+              >
+                <TouchableOpacity
+                  onPress={() =>
+                    this.perform("comment", this.state.value, null)
+                  }
+                  style={{
+                    height: width * 0.12,
+                    width: width * 0.12,
+                    backgroundColor: "rgba(52, 52, 52, 0.8)",
+                    borderRadius: width * 0.02,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Entypo name="message" size={width * 0.07} color="#fff" />
+                </TouchableOpacity>
+                <View>
+                  <Text style={{ color: "#fff", fontSize: width * 0.035 }}>
+                    0
+                  </Text>
+                </View>
+              </View>
+
+              <View
+                style={{
+                  alignItems: "center",
+                }}
+              >
+                <TouchableOpacity
+                  onPress={() =>
+                    this.perform(
+                      "download",
+                      this.state.value,
+                      this.state.data[this.state.value]
+                    )
+                  }
+                  style={{
+                    height: width * 0.12,
+                    width: width * 0.12,
+                    backgroundColor: "rgba(52, 52, 52, 0.8)",
+                    borderRadius: width * 0.02,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {this.state.downloading ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <Feather name="download" size={width * 0.07} color="#fff" />
+                  )}
+                </TouchableOpacity>
+                <View>
+                  <Text
+                    style={{
+                      color: "#fff",
+                      fontSize: width * 0.035,
+                      fontFamily: "Roboto-Bold",
+                    }}
+                  >
+                    {this.state.data[this.state.value].downloads}
+                  </Text>
+                </View>
+              </View>
+
+              <View
+                style={{
+                  paddingBottom: width * 0.1,
+                  alignItems: "center",
+                }}
+              >
+                <TouchableOpacity
+                  onPress={() =>
+                    this.perform(
+                      "share",
+                      this.state.value,
+                      this.state.data[this.state.value]
+                    )
+                  }
+                  style={{
+                    height: width * 0.12,
+                    width: width * 0.12,
+                    backgroundColor: "rgba(52, 52, 52, 0.8)",
+                    borderRadius: width * 0.02,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <MaterialCommunityIcons
+                    name="share"
+                    size={width * 0.07}
+                    color="#fff"
+                  />
+                </TouchableOpacity>
+                <View>
+                  <Text
+                    style={{
+                      color: "#fff",
+                      fontSize: width * 0.035,
+                      fontFamily: "Roboto-Bold",
+                    }}
+                  >
+                    {this.state.data[this.state.value].whatsapp}
+                  </Text>
+                </View>
+              </View>
+
+              <TouchableOpacity style={{ paddingBottom: width * 0.02 }}>
+                <Animated.Image
+                  resizeMode="contain"
+                  source={{
+                    uri:
+                      "https://www.flaticon.com/premium-icon/icons/svg/3083/3083400.svg",
+                  }}
+                  style={{
+                    height: width * 0.15,
+                    width: width * 0.15,
+                    transform: [{ rotateZ: cdRotating }],
+                  }}
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : null}
       </View>
     );
   }
@@ -873,7 +1301,7 @@ export default Videos;
 {
   /* <RBSheet
                     ref={(ref) => {
-                      this[index] = ref;
+                       = ref;
                     }}
                     height={height * 0.5}
                     customStyles={{

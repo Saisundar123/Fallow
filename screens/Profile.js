@@ -26,7 +26,7 @@ class Profile extends Component {
     super(props);
     this.state = {
       userdata: "",
-      userid: "",
+      userData: "",
       profileImg:
         "https://image.shutterstock.com/image-photo/closeup-nature-view-green-leaf-600w-1722021196.jpg",
       backImg:
@@ -37,12 +37,14 @@ class Profile extends Component {
   async componentDidMount() {
     try {
       const value = await AsyncStorage.getItem("userdata");
+      console.log(value, "value");
       if (value !== null) {
         const datas = JSON.parse(value);
         // We have data!!
         this.setState({ userid: datas.userData._id });
         this.getApiData(datas.userData._id);
-        console.log(datas, "val");
+        // console.log(this.state.userData, "val");
+      } else {
       }
     } catch (error) {
       // Error retrieving data
@@ -147,6 +149,7 @@ class Profile extends Component {
   };
 
   render() {
+    console.log(this.state.userdata.posts, "data");
     return (
       <View style={{ flex: 1, backgroundColor: "#ffffff" }}>
         <ImageBackground
@@ -209,7 +212,9 @@ class Profile extends Component {
             >
               <View style={{ alignItems: "center" }}>
                 <Text style={{ color: "#fff", fontSize: width * 0.04 }}>
-                  {this.state.userdata.followers}
+                  {this.state.userdata.followersData !== undefined
+                    ? this.state.userdata.followersData.length
+                    : 0}
                 </Text>
               </View>
               <View>
@@ -255,7 +260,11 @@ class Profile extends Component {
             style={{ paddingLeft: width * 0.01, paddingRight: width * 0.01 }}
           >
             <View style={{ paddingLeft: width * 0.04 }}>
-              <Text style={{ fontSize: width * 0.04 }}>0</Text>
+              <Text style={{ fontSize: width * 0.04 }}>
+                {this.state.userdata.posts !== undefined
+                  ? this.state.userdata.posts.length
+                  : null}
+              </Text>
             </View>
             <View>
               <Text style={{ fontSize: width * 0.04 }}>Posts</Text>

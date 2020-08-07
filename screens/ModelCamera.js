@@ -97,7 +97,10 @@ export default class ModelCamera extends Component {
       });
       if (!result.cancelled) {
         // this.setState({ galleryVideo: result });
-        this.props.navigation.navigate("uploadvideo", { uploadData: result });
+        this.props.navigation.navigate("uploadvideo", {
+          uploadData: result,
+          draft: false,
+        });
       }
 
       console.log(result);
@@ -107,6 +110,7 @@ export default class ModelCamera extends Component {
   };
 
   recordVideo = () => {
+    // console.log(this.state.videoTaking, "taki");
     if (this.state.videoTaking) {
       this.setState({ videoTaking: false });
       this.cameraRef.stopRecording();

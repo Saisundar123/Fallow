@@ -82,6 +82,7 @@ export default VideoComments = (props) => {
               placeholder="Add a comment"
               style={{ height: height * 0.048, width: width * 0.78 }}
               onChangeText={(text) => props.onChangeText(text)}
+              value={props.commentValue}
             />
           </View>
           <TouchableOpacity

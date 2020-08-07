@@ -17,12 +17,15 @@ import MyTabBar from "./screens/MyTabBar";
 import Notifications from "./screens/Notifications";
 import Music from "./screens/Music";
 import Favorites from "./screens/Favorites";
+import LoginWarning from "./screens/LoginWarning";
 import { createStackNavigator } from "@react-navigation/stack";
 import { NavigationContainer } from "@react-navigation/native";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import BottomShe from "./screens/BottomShe";
+import { AppLoading } from "expo";
+import { useFonts } from "expo-font";
 import {
   AntDesign,
   Feather,
@@ -33,6 +36,7 @@ import {
   MaterialCommunityIcons,
 } from "@expo/vector-icons";
 import Test from "./screens/Test";
+import SelectList from "./screens/SelectList";
 
 const { height, width } = Dimensions.get("window");
 
@@ -42,14 +46,24 @@ const Drawer = createDrawerNavigator();
 const Tabs = createBottomTabNavigator();
 
 export default function App() {
-  return (
-    <View style={styles.container}>
-      <StatusBar style="dark" hidden={true} />
-      <MyStack />
-      {/* <MyBottomTabs /> */}
-      {/* <Test /> */}
-    </View>
-  );
+  let [fontsLoaded] = useFonts({
+    "Roboto-Regular": require("./assets/fonts/Roboto-Regular.ttf"),
+    "Roboto-Light": require("./assets/fonts/Roboto-Light.ttf"),
+    "Roboto-Bold": require("./assets/fonts/Roboto-Bold.ttf"),
+  });
+
+  if (!fontsLoaded) {
+    return <AppLoading />;
+  } else {
+    return (
+      <View style={styles.container}>
+        <StatusBar style="dark" hidden={false} />
+        <MyStack />
+        {/* <SelectList /> */}
+        {/* <Test /> */}
+      </View>
+    );
+  }
 }
 
 const MyBottomTabs = () => {
@@ -294,6 +308,11 @@ const MyStack = () => {
         <Stack.Screen
           name="login"
           component={Login}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="loginwarning"
+          component={LoginWarning}
           options={{ headerShown: false }}
         />
         <Stack.Screen

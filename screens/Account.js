@@ -10,11 +10,13 @@ import {
   Easing,
   ActivityIndicator,
   ToastAndroid,
+  AsyncStorage,
 } from "react-native";
 import { Entypo } from "@expo/vector-icons";
 import Login from "./Login";
 import axios from "axios";
-import { url } from "./Main";
+import { url, GOOGLEID } from "./Main";
+import * as Google from "expo-google-app-auth";
 
 const { height, width } = Dimensions.get("window");
 
@@ -124,6 +126,26 @@ class Account extends Component {
       })
       .catch((err) => console.log(err, "err"));
   };
+
+  googleSignup = async () => {
+    console.log("enter");
+
+    try {
+      const result = await Google.logInAsync({
+        androidClientId: GOOGLEID,
+        // iosClientId: YOUR_CLIENT_ID_HERE,
+        scopes: ["profile", "email"],
+      });
+      console.log(result.type, "type");
+      if (result.type === "success") {
+        console.log(result);
+      } else {
+        console.log("cancelled");
+      }
+    } catch (e) {
+      console.log(e, "err");
+    }
+  };
   render() {
     const bottom = this.state.animation.interpolate({
       inputRange: [0, 1],
@@ -157,6 +179,7 @@ class Account extends Component {
             onPressSign={this.signupValidate}
             error={this.state.error}
             processing={this.state.processing}
+            googleSignup={this.googleSignup}
           />
         ) : this.state.login ? (
           <Login
@@ -166,13 +189,17 @@ class Account extends Component {
         ) : (
           <View style={{ flex: 0.5 }}>
             <View style={{ flex: 0.6, alignItems: "center" }}>
-              <Text style={{ fontSize: width * 0.08, fontWeight: "bold" }}>
+              <Text
+                style={{ fontSize: width * 0.08, fontFamily: "Roboto-Bold" }}
+              >
                 FALLOW
               </Text>
             </View>
 
             <View style={{ flex: 1, alignItems: "center" }}>
-              <Text style={{ fontSize: width * 0.04, fontWeight: "bold" }}>
+              <Text
+                style={{ fontSize: width * 0.04, fontFamily: "Roboto-Bold" }}
+              >
                 Discover Unlimited Entertainment
               </Text>
             </View>
@@ -191,12 +218,15 @@ class Account extends Component {
               }}
             >
               <TouchableOpacity
-                onPress={() => this.props.navigation.navigate("mybottomtabs")}
+                onPress={async () => {
+                  await AsyncStorage.clear();
+                  this.props.navigation.navigate("mybottomtabs");
+                }}
               >
                 <Text
                   style={{
                     fontSize: width * 0.04,
-                    fontWeight: "bold",
+                    fontFamily: "Roboto-Bold",
                     color: "#b163e7",
                   }}
                 >
@@ -236,7 +266,8 @@ const AccountButton = (props) => {
       >
         <Text
           style={{
-            fontWeight: "bold",
+            // fontWeight: "bold",
+            fontFamily: "Roboto-Bold",
             fontSize: width * 0.04,
             color: "#ffffff",
           }}
@@ -357,6 +388,7 @@ const SignupFields = (props) => {
             width: width * 0.85,
             alignSelf: "center",
           }}
+          onPress={() => props.googleSignup()}
         >
           <View
             style={{

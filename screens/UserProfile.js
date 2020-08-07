@@ -35,79 +35,10 @@ class UserProfile extends Component {
       userid: this.props.route.params.userid,
       data: false,
       userdata: {},
-      // userdata: {
-      //   id: "1",
-      //   name: "Aditya",
-      //   caption: "Aditya",
-      //   Posts: "2",
-      //   img:
-      //     "data:image/jpeg;base64,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",
-      //   followers: "0",
-      //   following: "2",
-      //   recentPosts: [
-      //     {
-      //       id: "1",
-      //       name: "Aditya",
-      //       caption: "Aditya",
-      //       description: "hjhkjhjhjjhj",
-      //       img:
-      //         "data:image/jpeg;base64,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",
-      //       videoUrl: require("../assets/nature1.mp4"),
-      //       views: "2000",
-      //       postedOn: "20",
-      //       likes: "0",
-      //       share: "0",
-      //       comments: "4",
-      //     },
-      //     {
-      //       id: "2",
-      //       name: "Aditya",
-      //       caption: "Aditya",
-      //       description: "hjhkjhjhjjhj",
-      //       img:
-      //         "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBwgHBgkIBwgKCgkLDRYPDQwMDRsUFRAWIB0iIiAdHx8kKDQsJCYxJx8fLT0tMTU3Ojo6Iys/RD84QzQ5OjcBCgoKDQwNGg8PGjclHyU3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3N//AABEIAI4AXwMBIgACEQEDEQH/xAAcAAEAAQUBAQAAAAAAAAAAAAAABwEDBAUGAgj/xAA2EAABAwMCBAQDBAsAAAAAAAABAAIDBAUREiEGBzFBE1FhgRQioSNicdEIFTJCQ5GSsbLh8P/EABUBAQEAAAAAAAAAAAAAAAAAAAAB/8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAwDAQACEQMRAD8AUdsAaPl7LaQW7GPlW3pqMADZZ0dNjsqjURW8eSym0IA6L1fLjHZaETujEksjxHDFq063kE7nsAAST2AK4U8z5Zo6g0NJA+OkYXzTSv0CTf5QweZ26oOtra+1W54ZX19NTvPRskgBPt1Wk4g45sFleyJr3Vsjma8U+C0ZGwLugJUHVtVNWVU1TVPMk8ry97ndyVZycY7KKkZ3Neq0vDbTT6y7LT4rsBvkRjc+q2EnNKhFHE9ltmfWOB8SPUGsafQ7kqKEQT5w7xVZ+ICIqWbw6rGTTyjS727O9lvZKbI6L5qp55aadk9PI6OWN2pr2HBB/FSVwrzMrn1kNLd4WTxyyhniMBDm5299+yo7uqowQdloa+gBzt3XbTQhzcjDgRkEHII9Fqqum9ER1cVPgdFkCEBZhg0jovGlBEfOaKZ0EdRFqa6ieRp8TTmN7MF4HffZQu6R5Dm63aXO1OGep8/qVNvNa0Xq8V0FXaLd8ZT0OpkrHNY/WdicN6ny6Z8vNQ3dYmQ1ssTIfALHYdF4mvS7uAfz381FYSIiAiIgKo6hURBN3KOskrbNUCSeWURua0+J2fgk4OTnt5b5XX1UajvkpZqjTU3d0h+HcXQNjyQCRpOryPXCkyqZsqjrHv1BWiAmVQoMf4OnbVuqmNLZXjD9LyA/sC5vQnG2SMqN+dlbaLdY5I20dG+73HEXi+G0yNja4OJJ69QMf6XU8ePvAt1JT2MAy1VW2GVvi+E50elxc1r/AN0nTjV2UQ80J6aOSKJlhdbQ9o+ymDGSRyNDg7GAdbDlh1ZwSD3yio6Koqk5KooCIiAiIgm/kY5zuGq5pzpbWnH9DV31Q3IXNcpKD4PgejeWhr6l75nY75dgZ9gF1krVUbnSqFquLyUGvulHJVRRGBzGzwTMmiL86SR1Bx2ILhntnuvnjmnZ+IKfiStuN5he6CeVxgmY/XGI8/K0HbGAQMED6r6UUZc/Y6k8K0UsLcwtqtExHUAtyPbLfoFFQCiIgIiIC3fB9gm4lv8AS22HIa92qZ4/hxj9o/8AdyFpR1X0Lyf4Zp7LYTXPfDJcawAzaHhxgZ1aw46HG5H5IO0gpYaOmipqaMRwwsDI2NGA1oGAF4lasp7ljylVG4IXkhX9IXlzcILOFznMKzG+8IXCiYMyaBJGM4+Zpz+a6UheJYmzRPjfnS9pacHBwRhB8aSNLJHMOCWkg46LypI4q5bUFjvEFvZxAJJagPlbA6D7RkTQSSSHYJ2ONhn0UcvAD3BudIO2oYPuoryiIgKVv0f3Sfrq7MBPhmlaXAdMh+39yopXS8C8X1nCV0E9OWupJnNFXDoBMjAex6gjJxug+mpAVjSArLjkiqYI54HtkhkaHse05DgRkFW5Gqo3ROFbc7K9FUxk4QWyuN5icf0nB1K2OKMVNymH2UORpZ95/p6d1p7xzmsdNUS0lHT1jpWOLfHliDWD1xnUf5BQrxld2Xu+SVrJnyhzGjW8EEnG/X1JUVi3O+XG6XOa5VlQ59ZM7U6Xv5YHkMbYWucS4knqVREBERAVRsVREG9sfF9/sUsBt90qWxQ7Np3yF0WM5I0HbB9FLvD3N6y3CIR3pj7dUAbuAMkTvwI3H4Ee6gVEH2pI5kcbpJHBjGAuc5xwAB1JUBce83brU3Ooo+GKptNbmHQ2oYz7SUjq4E9B5Y3Uhc67zJa+CaiCndiatIiJHUR5Go/UD3XzMguTzS1Er5p5HySvOpz3uJc4+ZJVtEQEREBERAREQEREEp877/8AGcQz2tj/AJKOKKPT945e4/4D2UWLacT1puXEVzrS/X41VI9rvu6jj6YWrQEREBERAREQEREBERAREQEREBERAREQEREBERB//9k=",
-      //       videoUrl: require("../assets/tik.mp4"),
-      //       views: "2000",
-      //       postedOn: "20",
-      //       likes: "0",
-      //       share: "0",
-      //       comments: "4",
-      //     },
-      //     {
-      //       id: "2",
-      //       name: "Aditya",
-      //       caption: "Aditya",
-      //       description: "hjhkjhjhjjhj",
-      //       img:
-      //         "data:image/jpeg;base64,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",
-      //       videoUrl: require("../assets/tik.mp4"),
-      //       views: "2000",
-      //       postedOn: "20",
-      //       likes: "0",
-      //       share: "0",
-      //       comments: "4",
-      //     },
-      //     {
-      //       id: "2",
-      //       name: "Aditya",
-      //       caption: "Aditya",
-      //       description: "hjhkjhjhjjhj",
-      //       img:
-      //         "data:image/jpeg;base64,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",
-      //       videoUrl: require("../assets/tik.mp4"),
-      //       views: "2000",
-      //       postedOn: "20",
-      //       likes: "0",
-      //       share: "0",
-      //       comments: "4",
-      //     },
-      //   ],
-      // },
     };
   }
 
   componentDidMount() {
-    // console.log(this.state.userid, "id");
     axios
       .post(
         `${url}api/video/userprofile`,
@@ -270,10 +201,7 @@ class UserProfile extends Component {
                 // height: height * 0.4,
               }}
             >
-              {/* <ScrollView> */}
-              {/* {console.log(this.state.userdata.userposts, "noe")} */}
               <RecentPosts postData={this.state.userdata.userPosts} />
-              {/* </ScrollView> */}
             </View>
           </View>
         ) : (
@@ -461,8 +389,14 @@ const RecentPost = (props) => {
 
 const RecentPosts = (props) => {
   return (
-    // <ScrollView style={{ flex: 1 }}>
-    <View style={{ flex: 1, flexDirection: "row", flexWrap: "wrap" }}>
+    <View
+      style={{
+        flex: 1,
+        flexDirection: "row",
+        flexWrap: "wrap",
+        // backgroundColor: "red",
+      }}
+    >
       <FlatList
         data={props.postData}
         numColumns={3}
@@ -470,7 +404,6 @@ const RecentPosts = (props) => {
           return (
             <TouchableOpacity
               style={{
-                // borderRadius: width * 0.02,
                 margin: width * 0.015,
                 height: height * 0.25,
                 width: width * 0.3,
@@ -479,7 +412,9 @@ const RecentPosts = (props) => {
             >
               <Video
                 resizeMode="cover"
-                source={{ uri: url + item.url }}
+                source={{
+                  uri: url + item.url,
+                }}
                 // ref={(ref) => (this[index] = ref)}
                 style={{ flex: 1, borderRadius: width * 0.02 }}
                 shouldPlay={false}
@@ -488,10 +423,6 @@ const RecentPosts = (props) => {
           );
         }}
       />
-      {/* {props.postData.map((item, i) => {
-        
-      })} */}
     </View>
-    // </ScrollView>
   );
 };
